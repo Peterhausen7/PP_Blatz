@@ -402,7 +402,7 @@ public class JavaFXGUI implements GUIConnector {
                 break;
         }
         moveAll.getChildren().add(moveFreeCorr);
-        //@TODO wrong rotation, treaures not moving, players not moving, col offset by 1
+        //@TODO wrong rotation, treaures not moving, players not moving, col offset by 1 aa
         gridPane.add(freeCorridor, col, row);
         freeCorridor.fitWidthProperty().bind(gridPane.widthProperty()
                 .divide(gridPane.getColumnConstraints().size()));
