@@ -11,7 +11,6 @@ import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
@@ -82,8 +81,6 @@ public class FXMLDocumentcontroller implements Initializable {
 
     private static final Image PUSH_ARROW = new Image("gui/images/Arrow.png");
 
-    private final ImageView[] pushArrows = new ImageView[12];
-
     private final HBox[] playerBoxes = new HBox[4];
 
     private final ImageView[] freeCorridorIVs = new ImageView[2];
@@ -97,7 +94,15 @@ public class FXMLDocumentcontroller implements Initializable {
      * to have room for animations etc.
      */
     private final ImageView[][] imageViews = new ImageView[GameLogic.COLS + 2][GameLogic.ROWS + 2];
-
+    
+    @FXML
+    private Label labelPlayerOneTreasure;
+    @FXML
+    private Label labelPlayerTwoTreasure;
+    @FXML
+    private Label labelPlayerThreeTreasure;
+    @FXML
+    private Label labelPlayerFourTreasure;
 
 
     @Override
@@ -144,15 +149,9 @@ public class FXMLDocumentcontroller implements Initializable {
 
                 final int col = c;
                 final int row = r;
-                imageViews[c][r].setOnMouseClicked(e -> {
-                    game.gridClicked(col, row, colcount);
-                });
-                imageViews[c][r].setOnMouseEntered( e -> {
-                    game.cellEntered(col, row, colcount);
-                });
-                imageViews[c][r].setOnMouseExited( e -> {
-                    imageViews[col][row].setEffect(null);
-                });
+                imageViews[c][r].setOnMouseClicked(e -> game.gridClicked(col, row, colcount));
+                imageViews[c][r].setOnMouseEntered( e -> game.cellEntered(col, row, colcount));
+                imageViews[c][r].setOnMouseExited( e -> imageViews[col][row].setEffect(null));
                 imageViews[c][r].setPickOnBounds(true);
                 gridPane.add(imageViews[c][r], c, r);
 
@@ -180,12 +179,8 @@ public class FXMLDocumentcontroller implements Initializable {
             imgView.setImage(PUSH_ARROW);
             scalePushArrow(imgView, scale);
 
-            imgView.setOnMouseEntered(e -> {
-                scalePushArrow(imgView, 1);
-            });
-            imgView.setOnMouseExited(e -> {
-                scalePushArrow(imgView, scale);
-            });
+            imgView.setOnMouseEntered(e -> scalePushArrow(imgView, 1));
+            imgView.setOnMouseExited(e -> scalePushArrow(imgView, scale));
 
            imgView.setEffect(lighting);
 
@@ -196,12 +191,8 @@ public class FXMLDocumentcontroller implements Initializable {
             imgView.setRotate(180);
             scalePushArrow(imgView, scale);
 
-            imgView.setOnMouseEntered(e -> {
-                scalePushArrow(imgView, 1);
-            });
-            imgView.setOnMouseExited(e -> {
-                scalePushArrow(imgView, scale);
-            });
+            imgView.setOnMouseEntered(e -> scalePushArrow(imgView, 1));
+            imgView.setOnMouseExited(e -> scalePushArrow(imgView, scale));
 
             imgView.setEffect(lighting);
 
@@ -212,12 +203,8 @@ public class FXMLDocumentcontroller implements Initializable {
             imgView.setRotate(-90);
             scalePushArrow(imgView, scale);
 
-            imgView.setOnMouseEntered(e -> {
-                scalePushArrow(imgView, 1);
-            });
-            imgView.setOnMouseExited(e -> {
-                scalePushArrow(imgView, scale);
-            });
+            imgView.setOnMouseEntered(e -> scalePushArrow(imgView, 1));
+            imgView.setOnMouseExited(e -> scalePushArrow(imgView, scale));
 
             imgView.setEffect(lighting);
         }
@@ -227,12 +214,8 @@ public class FXMLDocumentcontroller implements Initializable {
             imgView.setRotate(90);
             scalePushArrow(imgView, scale);
 
-            imgView.setOnMouseEntered(e -> {
-                scalePushArrow(imgView, 1);
-            });
-            imgView.setOnMouseExited(e -> {
-                scalePushArrow(imgView, scale);
-            });
+            imgView.setOnMouseEntered(e -> scalePushArrow(imgView, 1));
+            imgView.setOnMouseExited(e -> scalePushArrow(imgView, scale));
 
             imgView.setEffect(lighting);
         }

@@ -64,8 +64,12 @@ public class FXMLGameSettingsController implements Initializable {
         String[] playerTypes = {"Mensch", "KI", "KI++"};
         ObservableList<String> playerTypesList = FXCollections.observableList(Arrays.asList(playerTypes));
 
-        ChoiceBox[] playerCboxes = {typeOfPlayer1, typeOfPlayer2, typeOfPlayer3, typeOfPlayer4};
-        for (ChoiceBox cBox : playerCboxes) {
+        ArrayList<ChoiceBox<String>> playerCboxes = new ArrayList<>(4);
+        playerCboxes.add(typeOfPlayer1);
+        playerCboxes.add(typeOfPlayer2);
+        playerCboxes.add(typeOfPlayer3);
+        playerCboxes.add(typeOfPlayer4);
+        for (ChoiceBox<String> cBox : playerCboxes) {
             cBox.setItems(playerTypesList);
             cBox.setValue(playerTypes[0]);
         }

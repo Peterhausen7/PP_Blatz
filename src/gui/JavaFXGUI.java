@@ -1,5 +1,8 @@
 package gui;
 
+import javafx.animation.ParallelTransition;
+import javafx.animation.PathTransition;
+import javafx.animation.TranslateTransition;
 import javafx.geometry.HPos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -10,11 +13,12 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import logic.Corridor;
-import logic.GUIConnector;
-import logic.Player;
-import logic.Treasure;
+import javafx.scene.shape.*;
+import javafx.util.Duration;
+import logic.*;
+
+import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
+import java.util.List;
 
 public class JavaFXGUI implements GUIConnector {
 
@@ -326,6 +330,115 @@ public class JavaFXGUI implements GUIConnector {
     }
 
     @Override
+    public void animateFigure(Player player, Position[] positions, GameLogic game) {
+        final double rowHeight = gridPane.getHeight() / gridPane.getRowCount();
+        final double colWidth = gridPane.getWidth() / gridPane.getColumnCount();
+        final double oldPosX = player.getPos().getCol() * colWidth;
+        final double oldPosY = player.getPos().getRow() * rowHeight;
+        final int playerNum = player.getPlayerNum() - 1;
+
+        GridPane.setColumnIndex(figures[playerNum], 1);
+        GridPane.setRowIndex(figures[playerNum], 1);
+
+        PathTransition pathTransition = new PathTransition();
+        Path path = new Path();
+
+        path.getElements().add(new MoveTo(oldPosX, oldPosY));
+        for (int index = 0; index < positions.length; index++) {
+            double xMove = positions[index].getCol() * colWidth;
+            double yMove = positions[index].getRow() * rowHeight;
+
+            path.getElements().add(new LineTo(xMove, yMove));
+        }
+
+        pathTransition.setOnFinished(e -> {
+            figures[playerNum].setTranslateX(0);
+            figures[playerNum].setTranslateY(0);
+            GridPane.setColumnIndex(figures[playerNum], positions[positions.length-1].getCol() + 1);
+            GridPane.setRowIndex(figures[playerNum], positions[positions.length-1].getRow() + 1);
+            game.moveAnimationFinished(player, positions[positions.length-1]);
+        });
+
+        pathTransition.setDuration(Duration.millis(1000 * positions.length));
+        //pathTransition.setDuration(Duration.millis(0));
+        pathTransition.setNode(figures[playerNum]);
+        pathTransition.setPath(path);
+
+        pathTransition.play();
+    }
+
+    @Override
+    public void animatePush(Direction pushDir, List<Position> positions, Corridor pushedCorridor) {
+        final double rowHeight = gridPane.getHeight() / gridPane.getRowCount();
+        final double colWidth = gridPane.getWidth() / gridPane.getColumnCount();
+        double pushAmount = 0;
+        int col = 0;
+        int row = 0;
+        ParallelTransition moveAll = new ParallelTransition();
+        ImageView freeCorridor = new ImageView(IMGS_OF_CORRIDORS[pushedCorridor.getType().ordinal()]);
+        TranslateTransition moveFreeCorr = new TranslateTransition(Duration.millis(1000), freeCorridor);
+        switch (pushDir) {
+            case RIGHT:
+                row = positions.get(0).getRow();
+                pushAmount = colWidth;
+                moveFreeCorr.byXProperty().set(pushAmount);
+                break;
+            case DOWN:
+                col = positions.get(0).getCol();
+                pushAmount = rowHeight;
+                moveFreeCorr.byYProperty().set(pushAmount);
+                break;
+            case LEFT:
+                col = imageViews.length;
+                row = positions.get(0).getRow();
+                pushAmount = -colWidth;
+                moveFreeCorr.byXProperty().set(pushAmount);
+                break;
+            case UP:
+                col = positions.get(0).getCol();
+                row = imageViews.length;
+                pushAmount = -rowHeight;
+                moveFreeCorr.byYProperty().set(pushAmount);
+                break;
+        }
+        moveAll.getChildren().add(moveFreeCorr);
+        //@TODO wrong rotation, treaures not moving, players not moving, col offset by 1
+        gridPane.add(freeCorridor, col, row);
+        freeCorridor.fitWidthProperty().bind(gridPane.widthProperty()
+                .divide(gridPane.getColumnConstraints().size()));
+        freeCorridor.fitHeightProperty().bind(gridPane.heightProperty()
+                .divide(gridPane.getRowConstraints().size()));
+
+
+
+
+        for (Position pos:positions) {
+            ImageView imgView = imageViews[pos.getCol() + 1][pos.getRow() + 1];
+            //imgView.setManaged(false);
+            TranslateTransition movePos = new TranslateTransition(Duration.millis(1000), imgView);
+
+            switch (pushDir) {
+                case UP:
+                    movePos.byYProperty().set(-rowHeight);
+                    break;
+                case DOWN:
+                    movePos.byYProperty().set(rowHeight);
+                    break;
+                case LEFT:
+                    movePos.byXProperty().set(-colWidth);
+                    break;
+                case RIGHT:
+                    movePos.byXProperty().set(colWidth);
+                    break;
+            }
+            moveAll.getChildren().add(movePos);
+        }
+
+        moveAll.play();
+    }
+
+
+    @Override
     public void animateFreeCorridorRotation(Corridor corr) {
 
     }
@@ -334,15 +447,8 @@ public class JavaFXGUI implements GUIConnector {
 
 
 
-    @Override
-    public void animatePush(Corridor corr) {
 
-    }
 
-    @Override
-    public void animateFigure() {
-
-    }
 
     @Override
     public void setPlayerName(Player player) {
@@ -374,9 +480,11 @@ public class JavaFXGUI implements GUIConnector {
     @Override
     public void endGameDialogue(String winner) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION, "Spieler " + winner + " hat gewonnen!", ButtonType.OK);
-        alert.showAndWait();
-        if (alert.getResult() == ButtonType.OK || alert.getResult() == null) {
-            FXMLDocumentcontroller.gameSettingsWindow.show();
-        }
+        alert.show();
+        alert.setOnHidden( e -> {
+            if (alert.getResult() == ButtonType.OK || alert.getResult() == null) {
+                FXMLDocumentcontroller.gameSettingsWindow.show();
+            }
+        });
     }
 }

@@ -4,6 +4,8 @@ import logic.Corridor;
 import logic.GUIConnector;
 import logic.Player;
 
+import java.util.List;
+
 public class FakeGUI implements GUIConnector {
 
     @Override
@@ -42,12 +44,12 @@ public class FakeGUI implements GUIConnector {
     }
 
     @Override
-    public void animatePush(Corridor corr) {
+    public void animatePush(Direction pushDir, List<Position> positions, Corridor pushedCorridor) {
 
     }
 
     @Override
-    public void animateFigure() {
+    public void animateFigure(Player player, Position[] path, GameLogic game) {
 
     }
 

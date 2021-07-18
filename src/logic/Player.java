@@ -14,9 +14,10 @@ public class Player {
     private Position pos;
     private final Position startingCorner;
     private final String name;
+
     /** The treasures a player has to find, represented as numbers 1..24*/
-    // @TODO maybe a separate class to save location of the treasure on the field
-    private Queue<Treasure> treasures;
+    private final Queue<Treasure> treasures;
+
     /** Number of player, decides colour and starting corner */
     private final int playerNum;
 
@@ -112,16 +113,6 @@ public class Player {
         return false;
     }
 
-    /**
-     * Removes treasure from the list of the treasures the player has to get
-     * (Player gets treasure -> no need to be in the list anymore)
-     * @param treasureNum - number of the treasure
-     */
-    public void removeTreasure(int treasureNum) {
-        /* @TODO */
-    }
-
-
 
     /**
      * Adds treasure the player has to get to the list
@@ -148,10 +139,6 @@ public class Player {
 
     public String getName() {
         return name;
-    }
-
-    public Queue<Treasure> getTreasures() {
-        return treasures;
     }
 
     public int getPlayerNum() {

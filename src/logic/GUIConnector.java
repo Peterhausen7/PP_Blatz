@@ -1,6 +1,7 @@
 package logic;
 
 
+import java.util.List;
 
 public interface GUIConnector {
 
@@ -32,14 +33,14 @@ public interface GUIConnector {
 
     /**
      * Animates the push of a col/row
-     * @param corr - the corridor (the free corridor) that pushes
+     * @param
      */
-    void animatePush(Corridor corr);
+    void animatePush(Direction pushDir, List<Position> positions, Corridor pushedCorridor);
 
     /**
      * Animates figure movement
      */
-    void animateFigure();
+    void animateFigure(Player player, Position[] path, GameLogic game);
 
     /**
      * Sets the player name on the GUI
@@ -48,8 +49,9 @@ public interface GUIConnector {
     void setPlayerName(Player player);
 
     /**
-     * Highlights a corridor on the GUI
-     * @param corr - corridor to highlight
+     * Highlights a cell on the GUI
+     * @param col - col of cell on GUI
+     * @param row - row of cell on GUI
      */
     void highlightCellGreen(int col, int row);
 

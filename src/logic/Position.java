@@ -19,11 +19,9 @@ public class Position {
      * @param fieldSize - row/col size of a field
      * @return true if corner
      */
-    public boolean isCorner(int fieldSize) {
-        boolean result = ((c == 0) && ((r == 0) || (r == (fieldSize - 1))))
-                || ((c == (fieldSize - 1)) && ((r == 0) || (r == (fieldSize - 1))));
-
-        return result;
+    public boolean notCorner(int fieldSize) {
+        return ((c != 0) || ((r != 0) && (r != (fieldSize - 1))))
+                && ((c != (fieldSize - 1)) || ((r != 0) && (r != (fieldSize - 1))));
     }
 
     /**
@@ -33,7 +31,7 @@ public class Position {
      */
     public boolean isEdge(int fieldSize) {
         boolean result = false;
-        if (!this.isCorner(fieldSize)) {
+        if (this.notCorner(fieldSize)) {
             result = (c == 0) || (r == 0) || (r == (fieldSize - 1)) || (c == (fieldSize - 1));
         }
         return result;
@@ -68,6 +66,14 @@ public class Position {
        // result[3] = (r != fieldSize - 1) ? new Position(c, r + 1) : null;
 
         return result;
+    }
+
+    public int getCol() {
+        return c;
+    }
+
+    public int getRow() {
+        return r;
     }
 
     @Override

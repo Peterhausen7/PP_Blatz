@@ -1,9 +1,5 @@
 package logic;
 
-enum Direction {
-    UP, RIGHT, DOWN, LEFT;
-}
-
 /**
  * Possible corridors
  */
@@ -13,7 +9,7 @@ public enum CorridorType {
     T;
 
     Direction[] connectsTo(Rotation rot) {
-        Direction result[];
+        Direction[] result;
         switch(this) {
             case I:
                 result = new Direction[2];
@@ -85,5 +81,4 @@ public enum CorridorType {
         }
         return result;
     }
-
 }

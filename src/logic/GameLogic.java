@@ -36,7 +36,7 @@ public class GameLogic {
     /** helps with flow control */
     private boolean pushed = false;
 
-
+    private boolean inAnimation = false;
 
     private Position targetLocation;
 
@@ -118,8 +118,8 @@ public class GameLogic {
     /**
      * Creates a game. The field is input as a string, it is
      * assumed the string is correct, as this is just used for testing
-     * @param gui
-     * @param field
+     * @param gui - connection to the GUI
+     * @param field - the field consisting of corridors
      */
     public GameLogic(GUIConnector gui, String field, Player[] players) {
         this.gui = gui;
@@ -212,12 +212,15 @@ public class GameLogic {
     private void pushTopToBottom(int col) {
         int lastRow = field[col].length - 1;
         Corridor newFreeCorridor = field[col][lastRow];
+        List<Position> positions = new ArrayList<>();
         for (int row = lastRow; row > 0;  row--) {
             field[col][row] = field[col][row - 1];
-            gui.displayCorridor(col, row, field[col][row]);
+            positions.add(new Position(col, row));
+            //gui.displayCorridor(col, row, field[col][row]);
         }
         field[col][0] = freeCorridor;
-        gui.displayCorridor(col, 0, field[col][0]);
+        positions.add(new Position(col, 0));
+       // gui.displayCorridor(col, 0, field[col][0]);
         freeCorridor = newFreeCorridor;
 
         for (Player player : players) {
@@ -229,8 +232,9 @@ public class GameLogic {
                     player.setPos(new Position(col, pos.r+1));
                 }
             }
-            gui.displayFigure(player.getPlayerNum(), player.getPos().c, player.getPos().r);
+            //gui.displayFigure(player.getPlayerNum(), player.getPos().c, player.getPos().r);
         }
+        gui.animatePush(Direction.DOWN, positions, field[col][0]);
 
         blockedPos = new Position(col, lastRow);
         gui.changeArrowCol(col+1, lastRow+2, true);
@@ -358,26 +362,46 @@ public class GameLogic {
      * @param target - Position to move to
      */
     public void moveFigureOfPlayer(Player player, Position target) {
-        if (findPath(player.getPos(), target) != null) {
-            player.setPos(target);
-            Corridor targetCorr = getCorridorAtPos(target);
-            if (targetCorr.hasTreasure()) {
-                if (player.collectTreasure(targetCorr.getTreasure())) {
-                    gui.removeTreasureFromGrid(targetCorr.getTreasure());
-                    targetCorr.removeTreasure();
-                    gui.displayCorridor(target.c, target.r, targetCorr);
+        Position[] path = findPath(player.getPos(), target);
+        if (path != null) {
+            inAnimation = true;
+            gui.animateFigure(player, path,this);
 
-                }
-            }
 
-            gui.displayFigure(player.getPlayerNum(), target.c, target.r);
-            // pushed = false;
-           //  nextPlayer();
-            nextTurn();
-            if (player.checkIfWon(target)) {
-                gameWon(player);
+//            Corridor targetCorr = getCorridorAtPos(target);
+//            if (targetCorr.hasTreasure()) {
+//                if (player.collectTreasure(targetCorr.getTreasure())) {
+//                    gui.removeTreasureFromGrid(targetCorr.getTreasure());
+//                    targetCorr.removeTreasure();
+//                    gui.displayCorridor(target.c, target.r, targetCorr);
+//
+//                }
+//            }
+
+            //nextTurn();
+
+        }
+    }
+
+    public void moveAnimationFinished(Player player, Position target) {
+        player.setPos(target);
+        Corridor targetCorr = getCorridorAtPos(target);
+        if (targetCorr.hasTreasure()) {
+            if (player.collectTreasure(targetCorr.getTreasure())) {
+                gui.removeTreasureFromGrid(targetCorr.getTreasure());
+                targetCorr.removeTreasure();
+                gui.displayCorridor(target.c, target.r, targetCorr);
+
             }
         }
+
+
+        if (player.checkIfWon(target)) {
+            gameWon(player);
+        }
+
+        nextTurn();
+        inAnimation = false;
     }
 
     /**
@@ -420,8 +444,8 @@ public class GameLogic {
         Map<Direction, Position> neighboursFrom = from.getNeighbours(field.length);
 
         for (Direction dir : possibleDirs) {
-            Position neighbour = null;
-            boolean reachable = false;
+            Position neighbour;
+            boolean reachable;
             neighbour = neighboursFrom.get(dir);
 
             if (neighbour != null) {
@@ -449,45 +473,49 @@ public class GameLogic {
      * @param row - row of cell clicked
      */
     public void gridClicked(int col, int row, int gridSize) {
-        Position pos = new Position(col, row);
-        if (pushed) {
-            //Not edge/corner click on the GUI grid
-            if (!pos.isEdge(gridSize) && !pos.isCorner(gridSize)) {
-                Position trg = new Position(col - 1, row - 1);
-                moveFigureOfPlayer(getCurrentPlayer(), trg);
+        if (!inAnimation) {
+            Position pos = new Position(col, row);
+            if (pushed) {
+                //Not edge/corner click on the GUI grid
+                if (!pos.isEdge(gridSize) && pos.notCorner(gridSize)) {
+                    Position trg = new Position(col - 1, row - 1);
+                    moveFigureOfPlayer(getCurrentPlayer(), trg);
 
-            }
-        } else {
-            //Edge click on GUI grid
-            if (pos.isEdge(gridSize)) {
-                int colToPush = col;
-                int rowToPush = row;
-                if (row == 0) {
-                    colToPush--;
-                } else if (col == 0) {
-                    rowToPush--;
-                } else if (col == gridSize - 1) {
-                    rowToPush--;
-                    colToPush = field.length - 1;
-                } else {
-                    colToPush--;
-                    rowToPush = field.length - 1;
                 }
-                Position pushPos = new Position(colToPush, rowToPush);
-                if (pushPos.isEdge(field.length)) {
-                    pushCorridor(colToPush, rowToPush);
+            } else {
+                //Edge click on GUI grid
+                if (pos.isEdge(gridSize)) {
+                    int colToPush = col;
+                    int rowToPush = row;
+                    if (row == 0) {
+                        colToPush--;
+                    } else if (col == 0) {
+                        rowToPush--;
+                    } else if (col == gridSize - 1) {
+                        rowToPush--;
+                        colToPush = field.length - 1;
+                    } else {
+                        colToPush--;
+                        rowToPush = field.length - 1;
+                    }
+                    Position pushPos = new Position(colToPush, rowToPush);
+                    if (pushPos.isEdge(field.length)) {
+                        pushCorridor(colToPush, rowToPush);
+                    }
                 }
             }
         }
     }
 
     public void cellEntered(int col, int row, int gridSize) {
-        Position pos = new Position(col, row);
-        if (!pos.isEdge(gridSize) && !pos.isCorner(gridSize)) {
-            if (findPath(getCurrentPlayer().getPos(), new Position(col-1, row-1)) != null) {
-                gui.highlightCellGreen(col, row);
-            } else {
-                gui.highlightCellRed(col, row);
+        if (!inAnimation) {
+            Position pos = new Position(col, row);
+            if (!pos.isEdge(gridSize) && pos.notCorner(gridSize)) {
+                if (findPath(getCurrentPlayer().getPos(), new Position(col-1, row-1)) != null) {
+                    gui.highlightCellGreen(col, row);
+                } else {
+                    gui.highlightCellRed(col, row);
+                }
             }
         }
     }
@@ -510,7 +538,6 @@ public class GameLogic {
                 gui.highlightCorrBlue(targetLocation.c, targetLocation.r, target);
             }
         }
-
     }
 
     private static Position calcCurrentTarget(Corridor[][] field, Player currPlayer) {
@@ -520,7 +547,7 @@ public class GameLogic {
         }
         for (int row = 0; row < field[0].length; row++) {
             for (int col = 0; col < field.length; col++) {
-                if (target != null && target.equals(field[col][row].getTreasure())) {
+                if (target.equals(field[col][row].getTreasure())) {
                     return new Position(col, row);
                 }
             }
