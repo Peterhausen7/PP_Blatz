@@ -35,7 +35,8 @@ public interface GUIConnector {
      * Animates the push of a col/row
      * @param
      */
-    void animatePush(Direction pushDir, List<Position> positions, Corridor pushedCorridor);
+    void animatePush(Direction pushDir, List<Position> positions, Corridor pushedCorridor,
+                     List<Integer> treasureIndices, List<Integer> playersToMove, GameLogic game);
 
     /**
      * Animates figure movement

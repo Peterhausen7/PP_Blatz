@@ -232,9 +232,10 @@ public class FXMLDocumentcontroller implements Initializable {
      * creates a game, temporary method to see stuff on the GUI
      */
     private void createGameTemp() {
-        JavaFXGUI gui = new JavaFXGUI(gridPane, imageViews, GameLogic.AMOUNT_OF_TREASURES, freeCorridorIVs, playerBoxes);
+        JavaFXGUI gui = new JavaFXGUI(gridPane, imageViews, GameLogic.AMOUNT_OF_TREASURES, freeCorridorIVs,
+                playerBoxes, btnRotateLeft, btnRotateRight, btnEndTurn);
         /* mock game for now, just random corridors, 4 figures in each corner*/
-     //   game = new GameLogic(gui);
+        game = new GameLogic(gui);
 
 //       game = new GameLogic(gui,"L100,I101,T000,I102,L200\n" +
 //                "I003,I104,I005,I106,I007\n" +
@@ -250,20 +251,20 @@ public class FXMLDocumentcontroller implements Initializable {
 //                "I000,I000,L100,L200,L100,I000,L100\n" +
 //                "L000,T100,T200,T100,T200,I100,L300", new Player[4]);
 //
-        Player[] players = new Player[4];
-        Queue<Treasure> targets = new LinkedList<>();
-        targets.add(Treasure.T06);
-        players[0] = new Player("P1", targets, 1, imageViews.length - 2, PlayerType.Human);
-        players[1] = new Player("P2", new LinkedList<>(), 2, imageViews.length - 2, PlayerType.Human);
-        players[2] = new Player("P3", new LinkedList<>(), 3, imageViews.length - 2, PlayerType.Human);
-        players[3] = new Player("P4", new LinkedList<>(), 4, imageViews.length - 2, PlayerType.Human);
-                game = new GameLogic(gui,"L101,I100,T000,L200,T000,L100,L200\n" +
-                "I000,L100,I000,T100,I002,T100,L300\n" +
-                "T300,L107,T300,I013,T014,L300,T100\n" +
-                "T206,I012,I005,T100,I003,I000,L115\n" +
-                "T300,L100,T200,L008,T118,L111,T100\n" +
-                "I009,I020,L100,L219,L110,I004,L100\n" +
-                "L016,T100,T200,T100,T217,I100,L300", players);
+//        Player[] players = new Player[4];
+//        Queue<Treasure> targets = new LinkedList<>();
+//        targets.add(Treasure.T06);
+//        players[0] = new Player("P1", targets, 1, imageViews.length - 2, PlayerType.Human);
+//        players[1] = new Player("P2", new LinkedList<>(), 2, imageViews.length - 2, PlayerType.Human);
+//        players[2] = new Player("P3", new LinkedList<>(), 3, imageViews.length - 2, PlayerType.Human);
+//        players[3] = new Player("P4", new LinkedList<>(), 4, imageViews.length - 2, PlayerType.Human);
+//                game = new GameLogic(gui,"L101,I100,T000,L200,T000,L100,L200\n" +
+//                "I000,L100,I000,T100,I002,T100,L300\n" +
+//                "T300,L107,T300,I013,T014,L300,T100\n" +
+//                "T206,I012,I005,T100,I003,I000,L115\n" +
+//                "T300,L100,T200,L008,T118,L111,T100\n" +
+//                "I009,I020,L100,L219,L110,I004,L100\n" +
+//                "L016,T100,T200,T100,T217,I100,L300", players);
 
 
 
@@ -352,5 +353,6 @@ public class FXMLDocumentcontroller implements Initializable {
     @FXML
     private void endTurn() {
         game.nextTurn();
+        btnEndTurn.setDisable(true);
     }
 }

@@ -4,7 +4,9 @@ import javafx.animation.ParallelTransition;
 import javafx.animation.PathTransition;
 import javafx.animation.TranslateTransition;
 import javafx.geometry.HPos;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.effect.Light;
 import javafx.scene.effect.Lighting;
@@ -17,7 +19,6 @@ import javafx.scene.shape.*;
 import javafx.util.Duration;
 import logic.*;
 
-import javax.swing.plaf.basic.BasicInternalFrameTitlePane;
 import java.util.List;
 
 public class JavaFXGUI implements GUIConnector {
@@ -84,15 +85,23 @@ public class JavaFXGUI implements GUIConnector {
      */
     private final Circle[] figures = new Circle[4];
 
+    private final Button rotateLeftBtn;
+    private final Button rotateRightBtn;
+    private final Button endTurnBtn;
+
 
 
     public JavaFXGUI(GridPane gridPane, ImageView[][] imageViews, int treasureCount, ImageView[] freeCorridorIVs,
-                     HBox[] playerBoxes) {
+                     HBox[] playerBoxes, Button rotateLeftBtn, Button rotateRightBtn, Button endTurnBtn) {
         this.gridPane = gridPane;
         this.imageViews = imageViews;
         this.freeCorridorIVs = freeCorridorIVs;
         this.playerBoxes = playerBoxes;
         this.treasures = new ImageView[treasureCount];
+        this.rotateLeftBtn = rotateLeftBtn;
+        this.rotateRightBtn = rotateRightBtn;
+        this.endTurnBtn = endTurnBtn;
+        this.endTurnBtn.setDisable(true);
         for (int index = 0; index < treasureCount; index++) {
           //  this.treasures[index] = new ImageView();
             this.treasures[index] = new ImageView(IMGS_OF_TREASURES[index]);
@@ -129,9 +138,6 @@ public class JavaFXGUI implements GUIConnector {
 
         figures[3].setFill(Color.RED);
         gridPane.add(figures[3], 1, 7);
-
-
-
 
 
         for (Circle figure : figures) {
@@ -173,6 +179,18 @@ public class JavaFXGUI implements GUIConnector {
         gridPane.getChildren().remove(treasures[treasure.getIndex()]);
     }
 
+    private void displayTreasureAtCell(int treasureIndex, int col, int row) {
+        ImageView imgView = treasures[treasureIndex];
+        if (imgView.isVisible()) {
+            setImageViewToGridCell(imgView, col, row);
+        } else {
+            gridPane.add(imgView, col, row);
+            imgView.setVisible(true);
+        }
+        imgView.setTranslateX(0);
+        imgView.setTranslateY(0);
+    }
+
     @Override
     public void displayCorridor(int col, int row, Corridor corr) {
         if (corr == null) {
@@ -180,53 +198,25 @@ public class JavaFXGUI implements GUIConnector {
         } else {
             Image img = IMGS_OF_CORRIDORS[corr.getType().ordinal()];
             imageViews[col+1][row+1].setImage(img);
-
-//            int rotAmount = 0;
-//            //I am using this instead of ordinal(), so the rotation of the img does not break when more hypothetical
-//            //rotations are added to the enum.
-//            switch (corr.getRotation()) {
-//                case RIGHT:
-//                    rotAmount = 1;
-//                    break;
-//                case UPSIDE_DOWN:
-//                    rotAmount = 2;
-//                    break;
-//                case LEFT:
-//                    rotAmount = 3;
-//                    break;
-//            }
-//            imageViews[col+1][row+1].setRotate(ROT_DEGREES * rotAmount);
-//            imageViews[col+1][row+1].setRotate(corr.getRotation().ordinal() * 90);
+            imageViews[col+1][row+1].setTranslateX(0);
+            imageViews[col+1][row+1].setTranslateY(0);
             setImageRot(corr, imageViews[col+1][row+1]);
 
+
+//            if (corr.hasTreasure()) {
+//
+//                int treasureIndex = corr.getTreasure().getIndex();
+//                ImageView imgView = treasures[treasureIndex];
+//                if (imgView.isVisible()) {
+//                    setImageViewToGridCell(treasures[treasureIndex], col+1, row+1);
+//                } else {
+//                    gridPane.add(imgView, col+1, row+1);
+//                    imgView.setVisible(true);
+//                }
+//            }
+
             if (corr.hasTreasure()) {
-                //-1 since treasure start from 1, arrays from 0
-
-//                img = IMGS_OF_TREASURES[corr.getTreasure()-1];
-//
-//                gridPane.getChildren().remove(treasures[corr.getTreasure()-1]);
-//
-//                ImageView imgView = new ImageView(img);
-//                //binds treasure img size to gridpane, just like with corridors
-//                imgView.fitWidthProperty().bind(gridPane.widthProperty()
-//                        .divide(gridPane.getColumnConstraints().size()));
-//                imgView.fitHeightProperty().bind(gridPane.heightProperty()
-//                        .divide(gridPane.getRowConstraints().size()));
-//                imgView.setMouseTransparent(true);
-//                gridPane.add(imgView, col+1, row+1);
-//
-//                treasures[corr.getTreasure()-1] = imgView;
-
-                //gridPane.getChildren().remove(treasures[corr.getTreasure()-1]);
-                //gridPane.add(treasures[corr.getTreasure()-1], col+1, row+1);
-                int treasureIndex = corr.getTreasure().getIndex();
-                ImageView imgView = treasures[treasureIndex];
-                if (imgView.isVisible()) {
-                    setImageViewToGridCell(treasures[treasureIndex], col+1, row+1);
-                } else {
-                    gridPane.add(imgView, col+1, row+1);
-                    imgView.setVisible(true);
-                }
+                displayTreasureAtCell( corr.getTreasure().getIndex(), col + 1, row + 1);
             }
         }
     }
@@ -329,6 +319,16 @@ public class JavaFXGUI implements GUIConnector {
         }
     }
 
+    private void toggleRotateButtons(boolean disable) {
+        rotateLeftBtn.setDisable(disable);
+        rotateRightBtn.setDisable(disable);
+        //endTurnBtn.setDisable(disable);
+    }
+
+    private void toggleEndTurnButton(Boolean disable) {
+        endTurnBtn.setDisable(disable);
+    }
+
     @Override
     public void animateFigure(Player player, Position[] positions, GameLogic game) {
         final double rowHeight = gridPane.getHeight() / gridPane.getRowCount();
@@ -336,6 +336,9 @@ public class JavaFXGUI implements GUIConnector {
         final double oldPosX = player.getPos().getCol() * colWidth;
         final double oldPosY = player.getPos().getRow() * rowHeight;
         final int playerNum = player.getPlayerNum() - 1;
+
+        toggleRotateButtons(true);
+        toggleEndTurnButton(true);
 
         GridPane.setColumnIndex(figures[playerNum], 1);
         GridPane.setRowIndex(figures[playerNum], 1);
@@ -357,6 +360,7 @@ public class JavaFXGUI implements GUIConnector {
             GridPane.setColumnIndex(figures[playerNum], positions[positions.length-1].getCol() + 1);
             GridPane.setRowIndex(figures[playerNum], positions[positions.length-1].getRow() + 1);
             game.moveAnimationFinished(player, positions[positions.length-1]);
+            toggleRotateButtons(false);
         });
 
         pathTransition.setDuration(Duration.millis(1000 * positions.length));
@@ -368,73 +372,98 @@ public class JavaFXGUI implements GUIConnector {
     }
 
     @Override
-    public void animatePush(Direction pushDir, List<Position> positions, Corridor pushedCorridor) {
+    public void animatePush(Direction pushDir, List<Position> positions, Corridor pushedCorridor,
+                            List<Integer> treasureIndices, List<Integer> playersToMove,  GameLogic game) {
         final double rowHeight = gridPane.getHeight() / gridPane.getRowCount();
         final double colWidth = gridPane.getWidth() / gridPane.getColumnCount();
         double pushAmount = 0;
         int col = 0;
         int row = 0;
+        toggleRotateButtons(true);
         ParallelTransition moveAll = new ParallelTransition();
         ImageView freeCorridor = new ImageView(IMGS_OF_CORRIDORS[pushedCorridor.getType().ordinal()]);
+        setImageRot(pushedCorridor, freeCorridor);
         TranslateTransition moveFreeCorr = new TranslateTransition(Duration.millis(1000), freeCorridor);
+
         switch (pushDir) {
             case RIGHT:
-                row = positions.get(0).getRow();
+                row = positions.get(0).getRow() + 1;
                 pushAmount = colWidth;
                 moveFreeCorr.byXProperty().set(pushAmount);
                 break;
             case DOWN:
-                col = positions.get(0).getCol();
+                col = positions.get(0).getCol() + 1;
                 pushAmount = rowHeight;
                 moveFreeCorr.byYProperty().set(pushAmount);
                 break;
             case LEFT:
-                col = imageViews.length;
-                row = positions.get(0).getRow();
+                col = imageViews.length - 1;
+                row = positions.get(0).getRow() + 1;
                 pushAmount = -colWidth;
                 moveFreeCorr.byXProperty().set(pushAmount);
                 break;
             case UP:
-                col = positions.get(0).getCol();
-                row = imageViews.length;
+                col = positions.get(0).getCol() + 1;
+                row = imageViews.length - 1;
                 pushAmount = -rowHeight;
                 moveFreeCorr.byYProperty().set(pushAmount);
                 break;
         }
         moveAll.getChildren().add(moveFreeCorr);
-        //@TODO wrong rotation, treaures not moving, players not moving, col offset by 1 aa
+
         gridPane.add(freeCorridor, col, row);
         freeCorridor.fitWidthProperty().bind(gridPane.widthProperty()
                 .divide(gridPane.getColumnConstraints().size()));
         freeCorridor.fitHeightProperty().bind(gridPane.heightProperty()
                 .divide(gridPane.getRowConstraints().size()));
 
-
-
-
-        for (Position pos:positions) {
-            ImageView imgView = imageViews[pos.getCol() + 1][pos.getRow() + 1];
-            //imgView.setManaged(false);
-            TranslateTransition movePos = new TranslateTransition(Duration.millis(1000), imgView);
-
-            switch (pushDir) {
-                case UP:
-                    movePos.byYProperty().set(-rowHeight);
-                    break;
-                case DOWN:
-                    movePos.byYProperty().set(rowHeight);
-                    break;
-                case LEFT:
-                    movePos.byXProperty().set(-colWidth);
-                    break;
-                case RIGHT:
-                    movePos.byXProperty().set(colWidth);
-                    break;
-            }
-            moveAll.getChildren().add(movePos);
+        if (pushedCorridor.hasTreasure()) {
+            displayTreasureAtCell(pushedCorridor.getTreasure().getIndex(), col, row);
         }
 
+        for (Position pos : positions) {
+            ImageView imgView = imageViews[pos.getCol() + 1][pos.getRow() + 1];
+            pushAnimationHelper(moveAll, imgView, pushDir, pushAmount);
+        }
+
+        for (Integer index : treasureIndices) {
+            ImageView imgView = treasures[index];
+            pushAnimationHelper(moveAll, imgView, pushDir, pushAmount);
+        }
+
+        for (Integer index : playersToMove) {
+            pushAnimationHelper(moveAll, figures[index], pushDir, pushAmount);
+        }
+
+        moveAll.setOnFinished(e -> {
+            gridPane.getChildren().remove(freeCorridor);
+            for (Integer index : playersToMove) {
+               figures[index].setTranslateX(0);
+               figures[index].setTranslateY(0);
+            }
+            game.pushAnimationFinished(positions);
+            toggleRotateButtons(false);
+            toggleEndTurnButton(false);
+        });
+
         moveAll.play();
+    }
+
+    private void pushAnimationHelper(ParallelTransition moveAll, Node imgView,
+                                     Direction pushDir, double pushAmount) {
+
+        TranslateTransition movePos = new TranslateTransition(Duration.millis(1000), imgView);
+        switch (pushDir) {
+            case UP:
+            case DOWN:
+                movePos.byYProperty().set(pushAmount);
+                break;
+            case LEFT:
+            case RIGHT:
+                movePos.byXProperty().set(pushAmount);
+                break;
+        }
+        moveAll.getChildren().add(movePos);
     }
 
 

@@ -44,7 +44,8 @@ public class FakeGUI implements GUIConnector {
     }
 
     @Override
-    public void animatePush(Direction pushDir, List<Position> positions, Corridor pushedCorridor) {
+    public void animatePush(Direction pushDir, List<Position> positions, Corridor pushedCorridor,
+                            List<Integer> treasureIndices, List<Integer> playersToMove, GameLogic game) {
 
     }
 
@@ -52,6 +53,9 @@ public class FakeGUI implements GUIConnector {
     public void animateFigure(Player player, Position[] path, GameLogic game) {
 
     }
+
+
+
 
     @Override
     public void setPlayerName(Player player) {

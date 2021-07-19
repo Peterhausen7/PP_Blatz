@@ -8,11 +8,51 @@ import java.util.*;
  */
 public class GameLogic {
 
+
+    private final Position[] staticPositions = {
+            new Position(0, 0),
+            new Position(2, 0),
+            new Position(4, 0),
+            new Position(6, 0),
+            new Position(0, 2),
+            new Position(2, 2),
+            new Position(4, 2),
+            new Position(6, 2),
+            new Position(0, 4),
+            new Position(2, 4),
+            new Position(4, 4),
+            new Position(6, 4),
+            new Position(0, 6),
+            new Position(2, 6),
+            new Position(4, 6),
+            new Position(6, 6)
+    };
+
+    private final Corridor[] staticCorridors = {
+            new Corridor(CorridorType.L, Rotation.RIGHT, null),
+            new Corridor(CorridorType.T, Rotation.NEUTRAL, null),
+            new Corridor(CorridorType.T, Rotation.NEUTRAL, null),
+            new Corridor(CorridorType.L, Rotation.UPSIDE_DOWN, null),
+            new Corridor(CorridorType.T, Rotation.LEFT, null),
+            new Corridor(CorridorType.T, Rotation.LEFT, null),
+            new Corridor(CorridorType.T, Rotation.NEUTRAL, null),
+            new Corridor(CorridorType.T, Rotation.RIGHT, null),
+            new Corridor(CorridorType.T, Rotation.LEFT, null),
+            new Corridor(CorridorType.T, Rotation.UPSIDE_DOWN, null),
+            new Corridor(CorridorType.T, Rotation.RIGHT, null),
+            new Corridor(CorridorType.T, Rotation.RIGHT, null),
+            new Corridor(CorridorType.L, Rotation.NEUTRAL, null),
+            new Corridor(CorridorType.T, Rotation.UPSIDE_DOWN, null),
+            new Corridor(CorridorType.T, Rotation.UPSIDE_DOWN, null),
+            new Corridor(CorridorType.L, Rotation.LEFT, null),
+    };
     /** Default Field size per the game rules 7*7 */
     public static final int COLS = 7;
     public static final int ROWS = 7;
     /** Default amount of treasures */
     public static final int AMOUNT_OF_TREASURES = 24;
+
+
 
     /** Log file */
     private final File log;
@@ -51,22 +91,61 @@ public class GameLogic {
 
         Random rng = new Random();
         this.gui = gui;
+
         freeCorridor = new Corridor(CorridorType.values()[rng.nextInt(3)]);
+
+
+        String playerName = "Player ";
+        int playerNum = 1;
+        int listIndex = 0;
+        int counter = 0;
+        List<Treasure> treasureList = new ArrayList<>();
+        Collections.addAll(treasureList, Treasure.values());
+        Collections.shuffle(treasureList);
+
+
 
         players = new Player[4];
         for (int idx = 0; idx < players.length; idx++) {
-            players[idx] = new Player();
+            Queue<Treasure> trsrsToFind = new LinkedList<>();
+            for (int index = listIndex; index < counter + 6 && index < treasureList.size(); index++) {
+                trsrsToFind.add(treasureList.get(index));
+                listIndex++;
+            }
+            counter = listIndex;
+            players[idx] = new Player(playerName + playerNum, trsrsToFind,playerNum, COLS, PlayerType.Human);
+            playerNum++;
         }
+
         currentPlayer = 0;
 
+
         field = new Corridor[COLS][ROWS];
+        for (int i = 0; i < staticPositions.length; i++) {
+            field[staticPositions[i].getCol()][staticPositions[i].getRow()] = staticCorridors[i];
+        }
+
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
-                field[col][row] = new Corridor(CorridorType.values()[rng.nextInt(3)],
-                        Rotation.values()[rng.nextInt(4)],
-                        Treasure.values()[rng.nextInt(25)]);
-                gui.displayCorridor(col, row, field[col][row]);
 
+                if (field[col][row] == null) {
+                    field[col][row] = new Corridor(CorridorType.values()[rng.nextInt(3)],
+                            Rotation.values()[rng.nextInt(4)],
+                            null);
+                }
+                gui.displayCorridor(col, row, field[col][row]);
+            }
+        }
+
+        listIndex = 0;
+        while (listIndex < AMOUNT_OF_TREASURES) {
+            int col = rng.nextInt(COLS);
+            int row = rng.nextInt(ROWS);
+            Corridor corr = field[col][row];
+            if (!corr.hasTreasure()) {
+                field[col][row] = new Corridor(corr.getType(), corr.getRotation(), treasureList.get(listIndex));
+                listIndex++;
+                gui.displayCorridor(col, row, field[col][row]);
             }
         }
 
@@ -75,8 +154,7 @@ public class GameLogic {
         //for now
         gui.displayFreeCorridor(freeCorridor);
         gui.setFiguresToCorners();
-
-        saveGameFromGSON();
+        displayAllPlayers();
 
 
         /* @TODO */
@@ -108,7 +186,8 @@ public class GameLogic {
 
         //for now
         gui.setFiguresToCorners();
-        gui.displayFreeCorridor(freeCorridor);
+        displayAllPlayers();
+
 
 
         /* @TODO */
@@ -169,9 +248,21 @@ public class GameLogic {
         freeCorridor = new Corridor(CorridorType.I);
 
         gui.setFiguresToCorners();
+//        for (Player player : players) {
+//            gui.displayFigure(player.getPlayerNum(), player.getStartingCorner().getCol(),
+//                    player.getStartingCorner().getRow());
+//        }
+        displayAllPlayers();
         gui.displayFreeCorridor(freeCorridor);
         /* @TODO */
         log = null;
+    }
+
+    private void displayAllPlayers() {
+        for (Player player : players) {
+            gui.displayFigure(player.getPlayerNum(), player.getPos().getCol(),
+                    player.getPos().getRow());
+        }
     }
 
 
@@ -199,11 +290,30 @@ public class GameLogic {
                 pushBottomToTop(col);
             }
             clearTargetLoc();
-            gui.displayFreeCorridor(freeCorridor);
+            //gui.displayFreeCorridor(freeCorridor);
             pushed = true;
         }
     }
 
+    public void pushAnimationFinished(List<Position> positions) {
+        for (Position pos : positions) {
+            gui.displayCorridor(pos.getCol(), pos.getRow(), getCorridorAtPos(pos));
+        }
+        gui.displayFreeCorridor(freeCorridor);
+        displayAllPlayers();
+
+        for (Player player : players) {
+            checkAndCollectTreasure(player, player.getPos());
+        }
+
+        inAnimation = false;
+    }
+
+    private void addTreasureIndexIfExists(List<Integer> treasureIndices, Corridor corr) {
+        if (corr.hasTreasure()) {
+            treasureIndices.add(corr.getTreasure().getIndex());
+        }
+    }
 
     /**
      * Pushes the free corridor from top to bottom at column col
@@ -211,17 +321,31 @@ public class GameLogic {
      */
     private void pushTopToBottom(int col) {
         int lastRow = field[col].length - 1;
+        //Saves the bottom most corridor as the to be new free corridor
         Corridor newFreeCorridor = field[col][lastRow];
+        //Lists for animation
         List<Position> positions = new ArrayList<>();
+        List<Integer> treasureIndices = new ArrayList<>();
+        List<Integer> playersToMove = new ArrayList<>();
+
+        /*
+        Starting with the bottom corridor, changes it to the one before it
+        and adds the position + treasure index to the lists
+        */
         for (int row = lastRow; row > 0;  row--) {
             field[col][row] = field[col][row - 1];
             positions.add(new Position(col, row));
-            //gui.displayCorridor(col, row, field[col][row]);
+            addTreasureIndexIfExists(treasureIndices, field[col][row]);
         }
+
+        //Old free corridor becomes first corridor
         field[col][0] = freeCorridor;
         positions.add(new Position(col, 0));
-       // gui.displayCorridor(col, 0, field[col][0]);
+        addTreasureIndexIfExists(treasureIndices, freeCorridor);
+
+        //New free corridor
         freeCorridor = newFreeCorridor;
+        addTreasureIndexIfExists(treasureIndices, freeCorridor);
 
         for (Player player : players) {
             Position pos = player.getPos();
@@ -231,11 +355,12 @@ public class GameLogic {
                 } else {
                     player.setPos(new Position(col, pos.r+1));
                 }
+                playersToMove.add(player.getPlayerNum() - 1);
             }
-            //gui.displayFigure(player.getPlayerNum(), player.getPos().c, player.getPos().r);
         }
-        gui.animatePush(Direction.DOWN, positions, field[col][0]);
-
+        gui.animatePush(Direction.DOWN, positions, field[col][0], treasureIndices, playersToMove, this);
+        inAnimation = true;
+        //Sets the Position that can't be pushed
         blockedPos = new Position(col, lastRow);
         gui.changeArrowCol(col+1, lastRow+2, true);
     }
@@ -247,13 +372,23 @@ public class GameLogic {
     private void pushBottomToTop(int col) {
         int lastRow = field[col].length - 1;
         Corridor newFreeCorridor = field[col][0];
+        //Lists for animation
+        List<Position> positions = new ArrayList<>();
+        List<Integer> treasureIndices = new ArrayList<>();
+        List<Integer> playersToMove = new ArrayList<>();
+
         for (int row = 0; row < lastRow;  row++) {
             field[col][row] = field[col][row + 1];
-            gui.displayCorridor(col, row, field[col][row]);
+            positions.add(new Position(col, row));
+            addTreasureIndexIfExists(treasureIndices, field[col][row]);
         }
+
         field[col][lastRow] = freeCorridor;
-        gui.displayCorridor(col, lastRow, field[col][lastRow]);
+        positions.add(new Position(col, lastRow));
+        addTreasureIndexIfExists(treasureIndices, freeCorridor);
+
         freeCorridor = newFreeCorridor;
+        addTreasureIndexIfExists(treasureIndices, freeCorridor);
 
         for (Player player : players) {
             Position pos = player.getPos();
@@ -263,10 +398,13 @@ public class GameLogic {
                 } else {
                     player.setPos(new Position(col, pos.r-1));
                 }
+                playersToMove.add(player.getPlayerNum() - 1);
             }
-            gui.displayFigure(player.getPlayerNum(), player.getPos().c, player.getPos().r);
         }
 
+        gui.animatePush(Direction.UP, positions, field[col][lastRow], treasureIndices, playersToMove, this);
+        inAnimation = true;
+        //Sets the Position that can't be pushed
         blockedPos = new Position(col, 0);
         gui.changeArrowCol(col+1, 0, true);
     }
@@ -278,13 +416,22 @@ public class GameLogic {
     private void pushLeftToRight(int row) {
         int lastCol = field.length - 1;
         Corridor newFreeCorridor = field[lastCol][row];
+        //Lists for animation
+        List<Position> positions = new ArrayList<>();
+        List<Integer> treasureIndices = new ArrayList<>();
+        List<Integer> playersToMove = new ArrayList<>();
+
         for (int col = lastCol; col > 0;  col--) {
             field[col][row] = field[col - 1][row];
-            gui.displayCorridor(col, row, field[col][row]);
+            positions.add(new Position(col, row));
+            addTreasureIndexIfExists(treasureIndices, field[col][row]);
         }
         field[0][row] = freeCorridor;
-        gui.displayCorridor(0, row, field[0][row]);
+        positions.add(new Position(0, row));
+        addTreasureIndexIfExists(treasureIndices, freeCorridor);
+
         freeCorridor = newFreeCorridor;
+        addTreasureIndexIfExists(treasureIndices, freeCorridor);
 
         for (Player player : players) {
             Position pos = player.getPos();
@@ -294,10 +441,14 @@ public class GameLogic {
                 } else {
                     player.setPos(new Position(pos.c + 1, row));
                 }
+                playersToMove.add(player.getPlayerNum() - 1);
             }
-            gui.displayFigure(player.getPlayerNum(), player.getPos().c, player.getPos().r);
+
         }
 
+        gui.animatePush(Direction.RIGHT, positions, field[0][row], treasureIndices, playersToMove, this);
+        inAnimation = true;
+        //Sets the Position that can't be pushed
         blockedPos = new Position(lastCol, row);
         gui.changeArrowCol(lastCol+2, row+1, true);
     }
@@ -310,14 +461,25 @@ public class GameLogic {
     private void pushRightToLeft(int row) {
         int lastCol = field.length - 1;
         Corridor newFreeCorridor = field[0][row];
+        //Lists for animation
+        List<Position> positions = new ArrayList<>();
+        List<Integer> treasureIndices = new ArrayList<>();
+        List<Integer> playersToMove = new ArrayList<>();
+
         for (int col = 0; col < lastCol;  col++) {
             field[col][row] = field[col + 1][row];
-            gui.displayCorridor(col, row, field[col][row]);
+            positions.add(new Position(col, row));
+            addTreasureIndexIfExists(treasureIndices, field[col][row]);
         }
-        field[lastCol][row] = freeCorridor;
-        gui.displayCorridor(lastCol, row, field[lastCol][row]);
-        freeCorridor = newFreeCorridor;
 
+        field[lastCol][row] = freeCorridor;
+        positions.add(new Position(lastCol, row));
+        addTreasureIndexIfExists(treasureIndices, freeCorridor);
+
+        freeCorridor = newFreeCorridor;
+        addTreasureIndexIfExists(treasureIndices, freeCorridor);
+
+        //Putting this into a separate method would require 7 parameters
         for (Player player : players) {
             Position pos = player.getPos();
             if (pos.r == row) {
@@ -326,10 +488,14 @@ public class GameLogic {
                 } else {
                     player.setPos(new Position(pos.c - 1, row));
                 }
+                playersToMove.add(player.getPlayerNum() - 1);
             }
-            gui.displayFigure(player.getPlayerNum(), player.getPos().c, player.getPos().r);
+
         }
 
+        gui.animatePush(Direction.LEFT, positions, field[lastCol][row], treasureIndices, playersToMove,this);
+        inAnimation = true;
+        //Sets the Position that can't be pushed
         blockedPos = new Position(0, row);
         gui.changeArrowCol(0, row+1, true);
     }
@@ -366,35 +532,24 @@ public class GameLogic {
         if (path != null) {
             inAnimation = true;
             gui.animateFigure(player, path,this);
-
-
-//            Corridor targetCorr = getCorridorAtPos(target);
-//            if (targetCorr.hasTreasure()) {
-//                if (player.collectTreasure(targetCorr.getTreasure())) {
-//                    gui.removeTreasureFromGrid(targetCorr.getTreasure());
-//                    targetCorr.removeTreasure();
-//                    gui.displayCorridor(target.c, target.r, targetCorr);
-//
-//                }
-//            }
-
-            //nextTurn();
-
+            player.setPos(target);
         }
     }
 
-    public void moveAnimationFinished(Player player, Position target) {
-        player.setPos(target);
+    private void checkAndCollectTreasure(Player player, Position target) {
+
         Corridor targetCorr = getCorridorAtPos(target);
         if (targetCorr.hasTreasure()) {
             if (player.collectTreasure(targetCorr.getTreasure())) {
                 gui.removeTreasureFromGrid(targetCorr.getTreasure());
                 targetCorr.removeTreasure();
                 gui.displayCorridor(target.c, target.r, targetCorr);
-
             }
         }
+    }
 
+    public void moveAnimationFinished(Player player, Position target) {
+        checkAndCollectTreasure(player, target);
 
         if (player.checkIfWon(target)) {
             gameWon(player);
