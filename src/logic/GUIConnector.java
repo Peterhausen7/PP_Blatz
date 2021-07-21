@@ -43,11 +43,11 @@ public interface GUIConnector {
      */
     void animateFigure(Player player, Position[] path, GameLogic game);
 
-    /**
-     * Sets the player name on the GUI
-     * @param player - players name to set
-     */
-    void setPlayerName(Player player);
+
+
+    void setupPlayerInfo(int playerNum, String name, int treasures);
+
+    void cleanUpGui(int playerNum);
 
     /**
      * Highlights a cell on the GUI
@@ -68,7 +68,7 @@ public interface GUIConnector {
      * Updates the treasures left of a player on the GUI
      * @param player - the players treasures to update
      */
-    void updateTreasuresLeft(Player player);
+    void updateTreasuresLeft(int playerNum, int treasures);
 
 
 

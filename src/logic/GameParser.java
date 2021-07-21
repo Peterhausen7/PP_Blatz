@@ -1,22 +1,31 @@
 package logic;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Class to parse game from or to (for example) GSON
  */
-public class GameParser {
-    private ArrayList<Object[]> field = new ArrayList<Object[]>();
+class GameParser {
+    private List<FieldCard[]> field;
     private FreeWayCard freeWayCard;
     private int currentPlayer;
-    private ArrayList<ParsedPlayer> players = new ArrayList <ParsedPlayer>();
+    private List<ParsedPlayer> players;
+
+    GameParser(List<FieldCard[]> field, FreeWayCard freeWayCard, int currentPlayer,
+               List<ParsedPlayer> players) {
+        this.field = field;
+        this.freeWayCard = freeWayCard;
+        this.currentPlayer = currentPlayer;
+        this.players = players;
+    }
 
     // Getter Methods
-    public ArrayList<Object[]> getField() {
+    public List<FieldCard[]> getField() {
         return field;
     }
 
-    public ArrayList<ParsedPlayer> getPlayers() {
+    public List<ParsedPlayer> getPlayers() {
         return players;
     }
 
@@ -29,22 +38,7 @@ public class GameParser {
     }
 
 
-    // Setter Methods
-    public void setFreeWayCard(FreeWayCard freeWayCard) {
-        this.freeWayCard = freeWayCard;
-    }
 
-    public void setCurrentPlayer(int currentPlayer) {
-        this.currentPlayer = currentPlayer;
-    }
-
-    public void setField(ArrayList<Object[]> field) {
-        this.field = field;
-    }
-
-    public void setPlayers(ArrayList<ParsedPlayer> players) {
-        this.players = players;
-    }
 }
 
 class ParsedPlayer {
@@ -52,8 +46,16 @@ class ParsedPlayer {
     private String name;
     private int directedBy;
     private ParsedPosition position;
-    private ArrayList<Integer> treasureCards;
+    private List<Integer> treasureCards;
 
+    ParsedPlayer(boolean involved, String name, int directedBy,
+                 ParsedPosition position, List<Integer> treasureCards) {
+        this.involved = involved;
+        this.name = name;
+        this.directedBy = directedBy;
+        this.position = position;
+        this.treasureCards = treasureCards;
+    }
 
     // Getter Methods
     boolean isInvolved() {
@@ -72,30 +74,33 @@ class ParsedPlayer {
         return position;
     }
 
-    ArrayList<Integer> getTreasureCards() {
+    List<Integer> getTreasureCards() {
         return treasureCards;
     }
 
+}
 
-    // Setter Methods
-    void setInvolved(boolean involved) {
-        this.involved = involved;
+class FieldCard {
+    private int type;
+    private int rotated;
+    private int treasure;
+
+    FieldCard(int type, int rotated, int treasure) {
+        this.type = type;
+        this.rotated = rotated;
+        this.treasure = treasure;
     }
 
-    void setName(String name) {
-        this.name = name;
+    int getType() {
+        return type;
     }
 
-    void setDirectedBy(int directedBy) {
-        this.directedBy = directedBy;
+    int getRotated() {
+        return rotated;
     }
 
-    void setPosition(ParsedPosition position) {
-        this.position = position;
-    }
-
-    void setTreasureCards(ArrayList<Integer> treasureCards) {
-        this.treasureCards = treasureCards;
+    int getTreasure() {
+        return treasure;
     }
 }
 
@@ -104,6 +109,13 @@ class FreeWayCard {
     private int rotated;
     private int treasure;
     ParsedPosition position;
+
+    FreeWayCard(int type, int rotated, int treasure, ParsedPosition position) {
+        this.type = type;
+        this.rotated = rotated;
+        this.treasure = treasure;
+        this.position = position;
+    }
 
 
     // Getter Methods
@@ -122,46 +134,23 @@ class FreeWayCard {
     public ParsedPosition getPosition() {
         return position;
     }
-
-    // Setter Methods
-    public void setType(int type) {
-        this.type = type;
-    }
-
-    public void setRotated(int rotated) {
-        this.rotated = rotated;
-    }
-
-    public void setTreasure(int treasure) {
-        this.treasure = treasure;
-    }
-
-    public void setPosition(ParsedPosition positionObject) {
-        this.position = positionObject;
-    }
 }
 
 class ParsedPosition {
     private int x;
     private int y;
 
+    ParsedPosition(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
 
     // Getter Methods
-    public float getX() {
+    public int getX() {
         return x;
     }
 
-    public float getY() {
+    public int getY() {
         return y;
-    }
-
-    // Setter Methods
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    public void setY(int y) {
-        this.y = y;
-
     }
 }

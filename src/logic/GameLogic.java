@@ -1,6 +1,9 @@
 package logic;
 
-import java.io.File;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.io.*;
 import java.util.*;
 
 /**
@@ -9,7 +12,7 @@ import java.util.*;
 public class GameLogic {
 
 
-    private final Position[] staticPositions = {
+    private final Position[] STATIC_POSITIONS = {
             new Position(0, 0),
             new Position(2, 0),
             new Position(4, 0),
@@ -28,7 +31,7 @@ public class GameLogic {
             new Position(6, 6)
     };
 
-    private final Corridor[] staticCorridors = {
+    private final Corridor[] STATIC_CORRIDORS = {
             new Corridor(CorridorType.L, Rotation.RIGHT, null),
             new Corridor(CorridorType.T, Rotation.NEUTRAL, null),
             new Corridor(CorridorType.T, Rotation.NEUTRAL, null),
@@ -60,7 +63,7 @@ public class GameLogic {
     private final GUIConnector gui;
 
     /** Logical field made out of corridors */
-    private final Corridor[][] field;
+    private Corridor[][] field;
 
     /** The free corridor to be pushed into a col/row*/
     private Corridor freeCorridor;
@@ -68,7 +71,7 @@ public class GameLogic {
     private Position blockedPos;
 
     /** The players */
-    private final Player[] players;
+    private Player[] players;
 
     /** The players index who's turn it currently is*/
     private int currentPlayer;
@@ -89,72 +92,98 @@ public class GameLogic {
     public GameLogic(GUIConnector gui) {
 
 
-        Random rng = new Random();
+
         this.gui = gui;
 
-        freeCorridor = new Corridor(CorridorType.values()[rng.nextInt(3)]);
-
-
-        String playerName = "Player ";
-        int playerNum = 1;
-        int listIndex = 0;
-        int counter = 0;
-        List<Treasure> treasureList = new ArrayList<>();
-        Collections.addAll(treasureList, Treasure.values());
-        Collections.shuffle(treasureList);
-
-
-
-        players = new Player[4];
-        for (int idx = 0; idx < players.length; idx++) {
-            Queue<Treasure> trsrsToFind = new LinkedList<>();
-            for (int index = listIndex; index < counter + 6 && index < treasureList.size(); index++) {
-                trsrsToFind.add(treasureList.get(index));
-                listIndex++;
-            }
-            counter = listIndex;
-            players[idx] = new Player(playerName + playerNum, trsrsToFind,playerNum, COLS, PlayerType.Human);
-            playerNum++;
-        }
-
-        currentPlayer = 0;
-
-
-        field = new Corridor[COLS][ROWS];
-        for (int i = 0; i < staticPositions.length; i++) {
-            field[staticPositions[i].getCol()][staticPositions[i].getRow()] = staticCorridors[i];
-        }
-
-        for (int row = 0; row < ROWS; row++) {
-            for (int col = 0; col < COLS; col++) {
-
-                if (field[col][row] == null) {
-                    field[col][row] = new Corridor(CorridorType.values()[rng.nextInt(3)],
-                            Rotation.values()[rng.nextInt(4)],
-                            null);
-                }
-                gui.displayCorridor(col, row, field[col][row]);
-            }
-        }
-
-        listIndex = 0;
-        while (listIndex < AMOUNT_OF_TREASURES) {
-            int col = rng.nextInt(COLS);
-            int row = rng.nextInt(ROWS);
-            Corridor corr = field[col][row];
-            if (!corr.hasTreasure()) {
-                field[col][row] = new Corridor(corr.getType(), corr.getRotation(), treasureList.get(listIndex));
-                listIndex++;
-                gui.displayCorridor(col, row, field[col][row]);
-            }
-        }
-
-
-
-        //for now
-        gui.displayFreeCorridor(freeCorridor);
         gui.setFiguresToCorners();
-        displayAllPlayers();
+
+
+//        newGame(List<String> names, List<Integer> playerNums, List<PlayerType> types, int treasurePerPlayer) {
+//            List<Treasure> treasureList = setupPlayers(names, playerNums, types, treasurePerPlayer);
+
+        List<String> names = new ArrayList<>(4);
+        names.add("Name 1");
+        names.add("Name 2");
+        names.add("Name 3");
+        names.add("Name 4");
+
+        List<Integer> playerNums = new ArrayList<>(4);
+        playerNums.add(0);
+        playerNums.add(1);
+        playerNums.add(2);
+        playerNums.add(3);
+
+        List<PlayerType> types = new ArrayList<>(4);
+        types.add(PlayerType.Human);
+        types.add(PlayerType.Human);
+        types.add(PlayerType.Human);
+        types.add(PlayerType.Human);
+
+        newGame(names, playerNums, types, 6);
+
+
+//        Random rng = new Random();
+//        freeCorridor = new Corridor(CorridorType.values()[rng.nextInt(3)]);
+//
+//
+//        String playerName = "Player ";
+//        int playerNum = 1;
+//        int listIndex = 0;
+//        int counter = 0;
+//        List<Treasure> treasureList = new ArrayList<>();
+//        Collections.addAll(treasureList, Treasure.values());
+//        Collections.shuffle(treasureList);
+//
+//        players = new Player[4];
+//        for (int idx = 0; idx < players.length; idx++) {
+//            Queue<Treasure> trsrsToFind = new LinkedList<>();
+//            for (int index = listIndex; index < counter + 6 && index < treasureList.size(); index++) {
+//                trsrsToFind.add(treasureList.get(index));
+//                listIndex++;
+//            }
+//            counter = listIndex;
+//            players[idx] = new Player(playerName + playerNum, trsrsToFind,playerNum, COLS, PlayerType.Human);
+//            playerNum++;
+//        }
+//
+//        currentPlayer = 0;
+//
+//
+//        field = new Corridor[COLS][ROWS];
+//        for (int i = 0; i < STATIC_POSITIONS.length; i++) {
+//            field[STATIC_POSITIONS[i].getCol()][STATIC_POSITIONS[i].getRow()] = STATIC_CORRIDORS[i];
+//        }
+//
+//        for (int row = 0; row < ROWS; row++) {
+//            for (int col = 0; col < COLS; col++) {
+//
+//                if (field[col][row] == null) {
+//                    field[col][row] = new Corridor(CorridorType.values()[rng.nextInt(3)],
+//                            Rotation.values()[rng.nextInt(4)],
+//                            null);
+//                }
+//                gui.displayCorridor(col, row, field[col][row]);
+//            }
+//        }
+//
+//        listIndex = 0;
+//        while (listIndex < AMOUNT_OF_TREASURES) {
+//            int col = rng.nextInt(COLS);
+//            int row = rng.nextInt(ROWS);
+//            Corridor corr = field[col][row];
+//            if (!corr.hasTreasure()) {
+//                field[col][row] = new Corridor(corr.getType(), corr.getRotation(), treasureList.get(listIndex));
+//                listIndex++;
+//                gui.displayCorridor(col, row, field[col][row]);
+//            }
+//        }
+//
+//
+//
+//        //for now
+//        gui.displayFreeCorridor(freeCorridor);
+//        gui.setFiguresToCorners();
+//        displayAllPlayers();
 
 
         /* @TODO */
@@ -252,10 +281,100 @@ public class GameLogic {
 //            gui.displayFigure(player.getPlayerNum(), player.getStartingCorner().getCol(),
 //                    player.getStartingCorner().getRow());
 //        }
-        displayAllPlayers();
+        displayAllPlayers() ;
         gui.displayFreeCorridor(freeCorridor);
         /* @TODO */
         log = null;
+    }
+
+
+    private List<Treasure> setupPlayers(List<String> names, List<Integer> playerNums,
+                              List<PlayerType> types, int treasurePerPlayer) {
+        int listIndex = 0;
+        int counter = 0;
+        List<Treasure> treasureList = new ArrayList<>();
+        Collections.addAll(treasureList, Treasure.values());
+        Collections.shuffle(treasureList);
+
+        players = new Player[types.size()];
+        for (int idx = 0; idx < players.length; idx++) {
+            Queue<Treasure> trsrsToFind = new LinkedList<>();
+            for (int index = listIndex;
+                 index < counter + treasurePerPlayer && index < treasurePerPlayer * players.length; index++) {
+                trsrsToFind.add(treasureList.get(index));
+                listIndex++;
+            }
+            counter = listIndex;
+            players[idx] = new Player(names.get(idx), trsrsToFind, playerNums.get(idx), COLS, types.get(idx));
+        }
+
+        return treasureList;
+    }
+
+    private void shuffleField(int treasureAmount, List<Treasure> treasureList) {
+
+        Random rng = new Random();
+        freeCorridor = new Corridor(CorridorType.values()[rng.nextInt(3)]);
+
+        field = new Corridor[COLS][ROWS];
+
+        for (int i = 0; i < STATIC_POSITIONS.length; i++) {
+            field[STATIC_POSITIONS[i].getCol()][STATIC_POSITIONS[i].getRow()] = STATIC_CORRIDORS[i];
+        }
+
+        for (int row = 0; row < ROWS; row++) {
+            for (int col = 0; col < COLS; col++) {
+
+                if (field[col][row] == null) {
+                    field[col][row] = new Corridor(CorridorType.values()[rng.nextInt(3)],
+                            Rotation.values()[rng.nextInt(4)],
+                            null);
+                }
+                gui.displayCorridor(col, row, field[col][row]);
+            }
+        }
+
+        int listIndex = 0;
+        while (listIndex < treasureAmount && listIndex < (COLS * ROWS - 4)) {
+            int col = rng.nextInt(COLS);
+            int row = rng.nextInt(ROWS);
+            Corridor corr = field[col][row];
+            if (new Position(col, row).notCorner(field.length) && !corr.hasTreasure()) {
+                field[col][row] = new Corridor(corr.getType(), corr.getRotation(), treasureList.get(listIndex));
+                listIndex++;
+                gui.displayCorridor(col, row, field[col][row]);
+            }
+        }
+        gui.displayFreeCorridor(freeCorridor);
+    }
+
+    private void cleanAttributes() {
+        currentPlayer = 0;
+        inAnimation = false;
+        pushed = false;
+        unblockOnGUI();
+        blockedPos = null;
+        targetLocation = null;
+    }
+
+    public void newGame(List<String> names, List<Integer> playerNums, List<PlayerType> types, int treasurePerPlayer) {
+        List<Treasure> treasureList = setupPlayers(names, playerNums, types, treasurePerPlayer);
+        cleanAttributes();
+
+//        currentPlayer = 0;
+//        inAnimation = false;
+//        pushed = false;
+//        unblockOnGUI();
+//        blockedPos = null;
+//        targetLocation = null;
+
+        gui.cleanUpGui(getCurrentPlayer().getPlayerNum());
+        shuffleField(treasurePerPlayer * players.length, treasureList);
+        displayAllPlayers();
+
+        for (Player player : players) {
+            gui.setupPlayerInfo(player.getPlayerNum(), player.getName(), player.getTreasuresLeft());
+        }
     }
 
     private void displayAllPlayers() {
@@ -277,7 +396,7 @@ public class GameLogic {
      */
     public void pushCorridor(int col, int row) {
 
-        if (new Position(col, row).isPushablePos() && (blockedPos == null ||
+        if (new Position(col, row).isPushablePos(field.length) && (blockedPos == null ||
                 (blockedPos.c != col || blockedPos.r != row))) {
             unblockOnGUI();
             if (col == 0) {
@@ -355,11 +474,12 @@ public class GameLogic {
                 } else {
                     player.setPos(new Position(col, pos.r+1));
                 }
-                playersToMove.add(player.getPlayerNum() - 1);
+                playersToMove.add(player.getPlayerNum());
             }
         }
-        gui.animatePush(Direction.DOWN, positions, field[col][0], treasureIndices, playersToMove, this);
         inAnimation = true;
+        gui.animatePush(Direction.DOWN, positions, field[col][0], treasureIndices, playersToMove, this);
+
         //Sets the Position that can't be pushed
         blockedPos = new Position(col, lastRow);
         gui.changeArrowCol(col+1, lastRow+2, true);
@@ -398,12 +518,13 @@ public class GameLogic {
                 } else {
                     player.setPos(new Position(col, pos.r-1));
                 }
-                playersToMove.add(player.getPlayerNum() - 1);
+                playersToMove.add(player.getPlayerNum());
             }
         }
 
-        gui.animatePush(Direction.UP, positions, field[col][lastRow], treasureIndices, playersToMove, this);
         inAnimation = true;
+        gui.animatePush(Direction.UP, positions, field[col][lastRow], treasureIndices, playersToMove, this);
+
         //Sets the Position that can't be pushed
         blockedPos = new Position(col, 0);
         gui.changeArrowCol(col+1, 0, true);
@@ -441,13 +562,14 @@ public class GameLogic {
                 } else {
                     player.setPos(new Position(pos.c + 1, row));
                 }
-                playersToMove.add(player.getPlayerNum() - 1);
+                playersToMove.add(player.getPlayerNum());
             }
 
         }
 
-        gui.animatePush(Direction.RIGHT, positions, field[0][row], treasureIndices, playersToMove, this);
         inAnimation = true;
+        gui.animatePush(Direction.RIGHT, positions, field[0][row], treasureIndices, playersToMove, this);
+
         //Sets the Position that can't be pushed
         blockedPos = new Position(lastCol, row);
         gui.changeArrowCol(lastCol+2, row+1, true);
@@ -488,13 +610,14 @@ public class GameLogic {
                 } else {
                     player.setPos(new Position(pos.c - 1, row));
                 }
-                playersToMove.add(player.getPlayerNum() - 1);
+                playersToMove.add(player.getPlayerNum());
             }
 
         }
 
-        gui.animatePush(Direction.LEFT, positions, field[lastCol][row], treasureIndices, playersToMove,this);
         inAnimation = true;
+        gui.animatePush(Direction.LEFT, positions, field[lastCol][row], treasureIndices, playersToMove,this);
+
         //Sets the Position that can't be pushed
         blockedPos = new Position(0, row);
         gui.changeArrowCol(0, row+1, true);
@@ -544,6 +667,7 @@ public class GameLogic {
                 gui.removeTreasureFromGrid(targetCorr.getTreasure());
                 targetCorr.removeTreasure();
                 gui.displayCorridor(target.c, target.r, targetCorr);
+                gui.updateTreasuresLeft(player.getPlayerNum(), player.getTreasuresLeft());
             }
         }
     }
@@ -742,34 +866,207 @@ public class GameLogic {
      * creates GameParser instance, wich the can be easily converted to json,
      * with toJson()
      */
-    public void saveGameFromGSON() {
-//        Gson gson = new GsonBuilder().create();
-//        GameParser game = new GameParser();
-//        game.setCurrentPlayer(3);
-//        game.setFreeWayCard(new FreeWayCard());
-//        game.field = new ArrayList<Object>(Collections.singleton(this.field));
-//        File file = new File("src/logic/saveFiles/test.txt");
-//
-//
-//        try {
-//            Writer writer = new FileWriter(file);
-//            gson.toJson(game, writer);
-//            writer.flush();
-//            writer.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+    public void saveGameFromGSON() throws IOException {
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-        /* @TODO */
+        List<FieldCard[]> parsedField = new ArrayList<>(field.length);
+
+        for (int col = 0; col < field[0].length; col++) {
+            FieldCard[] parsedCards = new FieldCard[field.length];
+            for (int row = 0; row < field.length; row++) {
+                Corridor corr = field[col][row];
+                int parsedTreasure = corr.hasTreasure() ? corr.getTreasure().getIndex() + 1 : 0;
+                FieldCard parsedCard = new FieldCard(corr.getType().ordinal(),
+                        corr.getRotation().ordinal(), parsedTreasure);
+                parsedCards[row] = parsedCard;
+            }
+            parsedField.add(parsedCards);
+        }
+
+        int parsedFreeTreasure = freeCorridor.hasTreasure() ? freeCorridor.getTreasure().getIndex() + 1 : 0;
+        int blockedX;
+        int blockedY;
+        if (blockedPos == null) {
+            blockedX = -1;
+            blockedY = -1;
+        } else if (blockedPos.getCol() == 0) {
+            blockedX = -1;
+            blockedY = blockedPos.getRow();
+        } else if (blockedPos.getRow() == 0) {
+            blockedX = blockedPos.getCol();
+            blockedY = -1;
+        } else if (blockedPos.getCol() == field.length - 1) {
+            blockedX = field.length;
+            blockedY = blockedPos.getRow();
+        } else {
+            blockedX = blockedPos.getCol();
+            blockedY = field.length;
+        }
+
+        FreeWayCard parsedFreeCard = new FreeWayCard(freeCorridor.getType().ordinal(),
+                freeCorridor.getRotation().ordinal(), parsedFreeTreasure, new ParsedPosition(blockedX, blockedY));
+
+        int parsedCurrentPlayer = getCurrentPlayer().getPlayerNum();
+
+//        ParsedPlayer(boolean involved, String name, int directedBy,
+//        ParsedPosition position, ArrayList<Integer> treasureCards) {
+
+        ParsedPlayer[] parsedPlayers = new ParsedPlayer[4];
+        for(int idx = 0; idx < players.length; idx++) {
+            List<Integer> treasures = new ArrayList<>();
+            for (Treasure treasure : players[idx].getTargetTreasures()) {
+                treasures.add(treasure.getIndex() + 1);
+            }
+            parsedPlayers[players[idx].getPlayerNum()] = new ParsedPlayer(true,
+                    players[idx].getName(), players[idx].getType().ordinal(),
+                   new ParsedPosition(players[idx].getPos().getCol(), players[idx].getPos().getRow()) , treasures);
+        }
+        for (int idx = 0; idx < parsedPlayers.length; idx++) {
+            if (parsedPlayers[idx] == null) {
+                List<Integer> empty = Collections.emptyList();
+                parsedPlayers[idx] = new ParsedPlayer(false, "Spieler " + (idx + 1),
+                        0, new ParsedPosition(0, 0), empty);
+            }
+        }
+
+        List<ParsedPlayer> listParsedPlayers = new ArrayList<>();
+        Collections.addAll(listParsedPlayers, parsedPlayers);
+
+        GameParser parsedGame = new GameParser(parsedField, parsedFreeCard, parsedCurrentPlayer, listParsedPlayers);
+
+
+        File file = new File("src/logic/saveFiles/test.json");
+
+        Writer writer = new FileWriter(file);
+        gson.toJson(parsedGame, writer);
+        writer.flush();
+        writer.close();
+
     }
 
     /**
      * Loads a game state from json/gson
      * creates GameParser instance from the file, from wich the game logic is build
      */
-    public void loadGameToGSON() {
+    public void loadGameToGSON(File f) throws FileNotFoundException {
 
-        /* @TODO */
+       // File f = new File("src/logic/saveFiles/LabyrinthTest.json");
+        Reader r = new FileReader(f);
+
+        Gson gson = new Gson();
+        GameParser graphData = gson.fromJson(r, GameParser.class);
+
+        cleanAttributes();
+
+        int parsedCurrentPlayer = graphData.getCurrentPlayer();
+        List<Integer> numOfParticipants = new ArrayList<>();
+        int counter = 0;
+        for (ParsedPlayer parsedPlayer : graphData.getPlayers()) {
+            if (parsedPlayer.isInvolved()) {
+                numOfParticipants.add(counter);
+            }
+            counter++;
+        }
+
+        players = new Player[numOfParticipants.size()];
+        for (int index = 0; index < players.length; index++) {
+            ParsedPlayer parsedPlayer = graphData.getPlayers().get(numOfParticipants.get(index));
+
+            Queue<Treasure> treasureQueue = new LinkedList<>();
+            for (int treasureNum : parsedPlayer.getTreasureCards()) {
+                treasureQueue.add(Treasure.values()[treasureNum - 1]);
+            }
+
+            players[index] = new Player(parsedPlayer.getName(), treasureQueue, numOfParticipants.get(index),
+                    field.length, PlayerType.values()[parsedPlayer.getDirectedBy()]);
+            players[index].setPos(new Position(parsedPlayer.getPosition().getX(), parsedPlayer.getPosition().getY()));
+            if (players[index].getPlayerNum() == parsedCurrentPlayer) {
+                currentPlayer = index;
+            }
+        }
+
+        gui.cleanUpGui(getCurrentPlayer().getPlayerNum());
+
+        field = new Corridor[graphData.getField().size()][graphData.getField().get(0).length];
+        for (int row = 0; row < field[0].length; row++) {
+            for (int col = 0; col < field.length; col++) {
+                FieldCard fieldCard =  graphData.getField().get(col)[row];
+                int treasureIndex = fieldCard.getTreasure();
+                Treasure treasure;
+                if (treasureIndex == 0) {
+                    treasure = null;
+                } else if (treasureIndex > 0 && treasureIndex <= AMOUNT_OF_TREASURES) {
+                    treasure = Treasure.values()[treasureIndex - 1];
+                } else {
+                    throw new IllegalArgumentException(treasureIndex + " is not a valid Treasure number");
+                }
+                Corridor corr = new Corridor(CorridorType.values()[fieldCard.getType()],
+                        Rotation.values()[fieldCard.getRotated()],
+                        treasure);
+                field[col][row] = corr;
+                gui.displayCorridor(col, row, field[col][row]);
+            }
+        }
+        int freeTreasureIndex = graphData.getFreeWayCard().getTreasure();
+        Treasure freeTreasure;
+        if (freeTreasureIndex == 0) {
+            freeTreasure = null;
+        } else if (freeTreasureIndex > 0 && freeTreasureIndex <= AMOUNT_OF_TREASURES) {
+            freeTreasure = Treasure.values()[freeTreasureIndex - 1];
+        } else {
+            throw new IllegalArgumentException(freeTreasureIndex + " is not a valid Treasure number");
+        }
+        freeCorridor = new Corridor(CorridorType.values()[graphData.getFreeWayCard().getType()],
+                Rotation.values()[graphData.getFreeWayCard().getRotated()],
+                freeTreasure);
+        ParsedPosition parsedFreePos = graphData.getFreeWayCard().getPosition();
+        Position blockedPos;
+        int parsedCol = parsedFreePos.getX();
+        int parsedRow = parsedFreePos.getY();
+        int arrowCol;
+        int arrowRow;
+
+
+        if (parsedCol == -1) {
+            blockedPos = new Position(0, parsedRow);
+            arrowCol = 0;
+            arrowRow = blockedPos.getRow() + 1;
+        } else if (parsedRow == -1) {
+            blockedPos = new Position(parsedCol, 0);
+            arrowCol = blockedPos.getCol() + 1;
+            arrowRow = 0;
+        } else if (parsedCol == field.length) {
+            blockedPos = new Position(parsedCol - 1, parsedRow);
+            arrowCol = parsedCol + 1;
+            arrowRow = blockedPos.getRow() + 1;
+        } else if (parsedRow == field.length) {
+            blockedPos = new Position(parsedCol, parsedRow - 1);
+            arrowCol = blockedPos.getCol() + 1;
+            arrowRow = parsedRow + 1;
+        } else {
+            throw new IllegalArgumentException("c: " + parsedCol + " r: " + parsedRow + " is not a valid " +
+                    "Position for the freeCorridor");
+        }
+
+        if (!(parsedCol == -1 && parsedRow == -1)) {
+            if (blockedPos.isPushablePos(field.length)) {
+                this.blockedPos = blockedPos;
+                gui.changeArrowCol(arrowCol, arrowRow, true);
+            } else {
+                throw new IllegalArgumentException("c: " + parsedCol + " r: " + parsedRow + " is not a valid " +
+                        "Position for the freeCorridor");
+            }
+        }
+
+
+
+        gui.displayFreeCorridor(freeCorridor);
+        displayAllPlayers();
+        for (Player player : players) {
+            gui.setupPlayerInfo(player.getPlayerNum(), player.getName(), player.getTreasuresLeft());
+        }
+
+
     }
 
     /**

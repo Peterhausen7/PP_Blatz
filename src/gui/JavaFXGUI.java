@@ -5,9 +5,7 @@ import javafx.animation.PathTransition;
 import javafx.animation.TranslateTransition;
 import javafx.geometry.HPos;
 import javafx.scene.Node;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
+import javafx.scene.control.*;
 import javafx.scene.effect.Light;
 import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
@@ -24,6 +22,10 @@ import java.util.List;
 public class JavaFXGUI implements GUIConnector {
 
     private static final int ROT_DEGREES = 90;
+
+    private static final double ANIMATION_FACTOR_PUSH = 5000;
+
+    private static final double ANIMATION_FACTOR_FIGURE = 2000;
 
     /**
      * Images of corridors, order as in Enum CorridorType
@@ -80,6 +82,10 @@ public class JavaFXGUI implements GUIConnector {
 
     private final HBox[] playerBoxes;
 
+    private final Label[] playerLabels;
+
+    private final Label[] treasureLabels;
+
     /**
      * The player figures represented as circles, all 4 for now
      */
@@ -89,10 +95,21 @@ public class JavaFXGUI implements GUIConnector {
     private final Button rotateRightBtn;
     private final Button endTurnBtn;
 
+    private final CheckBox checkFigureAnimation;
 
+    private final CheckBox checkPushAnimation;
+
+    private final Slider figureAnimSlider;
+
+    private final Slider pushAnimSlider;
 
     public JavaFXGUI(GridPane gridPane, ImageView[][] imageViews, int treasureCount, ImageView[] freeCorridorIVs,
-                     HBox[] playerBoxes, Button rotateLeftBtn, Button rotateRightBtn, Button endTurnBtn) {
+                     HBox[] playerBoxes, Button rotateLeftBtn,
+                     Button rotateRightBtn, Button endTurnBtn, Label[] playerLabels, Label[] treasureLabels,
+                     CheckBox checkFigureAnimation, CheckBox checkPushAnimation,
+                     Slider figureAnimSlider, Slider pushAnimSlider) {
+
+
         this.gridPane = gridPane;
         this.imageViews = imageViews;
         this.freeCorridorIVs = freeCorridorIVs;
@@ -102,6 +119,12 @@ public class JavaFXGUI implements GUIConnector {
         this.rotateRightBtn = rotateRightBtn;
         this.endTurnBtn = endTurnBtn;
         this.endTurnBtn.setDisable(true);
+        this.playerLabels = playerLabels;
+        this.treasureLabels = treasureLabels;
+        this.checkFigureAnimation = checkFigureAnimation;
+        this.checkPushAnimation = checkPushAnimation;
+        this.figureAnimSlider = figureAnimSlider;
+        this.pushAnimSlider = pushAnimSlider;
         for (int index = 0; index < treasureCount; index++) {
           //  this.treasures[index] = new ImageView();
             this.treasures[index] = new ImageView(IMGS_OF_TREASURES[index]);
@@ -141,8 +164,8 @@ public class JavaFXGUI implements GUIConnector {
 
 
         for (Circle figure : figures) {
+           // figure.toFront();
             figure.setVisible(false);
-            figure.toFront();
         }
     }
 
@@ -237,7 +260,7 @@ public class JavaFXGUI implements GUIConnector {
 
     @Override
     public void displayFigure(int playerNumber, int col, int row) {
-        Circle figure =  figures[playerNumber-1];
+        Circle figure =  figures[playerNumber];
         figure.setVisible(true);
         GridPane.setColumnIndex(figure, col+1);
         GridPane.setRowIndex(figure, row+1);
@@ -246,8 +269,8 @@ public class JavaFXGUI implements GUIConnector {
 
     @Override
     public void highlightNewPlayer(int oldPlayerNum, int newPlayerNum) {
-        playerBoxes[oldPlayerNum - 1].setStyle("-fx-background-color: #a8a8a8");
-        playerBoxes[newPlayerNum - 1].setStyle("-fx-background-color: lime");
+        playerBoxes[oldPlayerNum].setStyle("-fx-background-color: #a8a8a8");
+        playerBoxes[newPlayerNum].setStyle("-fx-background-color: lime");
     }
 
     @Override
@@ -335,7 +358,10 @@ public class JavaFXGUI implements GUIConnector {
         final double colWidth = gridPane.getWidth() / gridPane.getColumnCount();
         final double oldPosX = player.getPos().getCol() * colWidth;
         final double oldPosY = player.getPos().getRow() * rowHeight;
-        final int playerNum = player.getPlayerNum() - 1;
+        final int playerNum = player.getPlayerNum();
+
+        double speed = checkFigureAnimation.isSelected() ?
+                ANIMATION_FACTOR_FIGURE / figureAnimSlider.getValue() : 0;
 
         toggleRotateButtons(true);
         toggleEndTurnButton(true);
@@ -363,7 +389,7 @@ public class JavaFXGUI implements GUIConnector {
             toggleRotateButtons(false);
         });
 
-        pathTransition.setDuration(Duration.millis(1000 * positions.length));
+        pathTransition.setDuration(Duration.millis(speed * positions.length));
         //pathTransition.setDuration(Duration.millis(0));
         pathTransition.setNode(figures[playerNum]);
         pathTransition.setPath(path);
@@ -379,11 +405,15 @@ public class JavaFXGUI implements GUIConnector {
         double pushAmount = 0;
         int col = 0;
         int row = 0;
+
+        Duration speed = checkPushAnimation.isSelected() ?
+                Duration.millis(ANIMATION_FACTOR_PUSH / pushAnimSlider.getValue())  : Duration.ZERO;
+
         toggleRotateButtons(true);
         ParallelTransition moveAll = new ParallelTransition();
         ImageView freeCorridor = new ImageView(IMGS_OF_CORRIDORS[pushedCorridor.getType().ordinal()]);
         setImageRot(pushedCorridor, freeCorridor);
-        TranslateTransition moveFreeCorr = new TranslateTransition(Duration.millis(1000), freeCorridor);
+        TranslateTransition moveFreeCorr = new TranslateTransition(speed, freeCorridor);
 
         switch (pushDir) {
             case RIGHT:
@@ -423,16 +453,16 @@ public class JavaFXGUI implements GUIConnector {
 
         for (Position pos : positions) {
             ImageView imgView = imageViews[pos.getCol() + 1][pos.getRow() + 1];
-            pushAnimationHelper(moveAll, imgView, pushDir, pushAmount);
+            pushAnimationHelper(moveAll, imgView, pushDir, pushAmount, speed);
         }
 
         for (Integer index : treasureIndices) {
             ImageView imgView = treasures[index];
-            pushAnimationHelper(moveAll, imgView, pushDir, pushAmount);
+            pushAnimationHelper(moveAll, imgView, pushDir, pushAmount, speed);
         }
 
         for (Integer index : playersToMove) {
-            pushAnimationHelper(moveAll, figures[index], pushDir, pushAmount);
+            pushAnimationHelper(moveAll, figures[index], pushDir, pushAmount, speed);
         }
 
         moveAll.setOnFinished(e -> {
@@ -447,12 +477,13 @@ public class JavaFXGUI implements GUIConnector {
         });
 
         moveAll.play();
+
     }
 
     private void pushAnimationHelper(ParallelTransition moveAll, Node imgView,
-                                     Direction pushDir, double pushAmount) {
+                                     Direction pushDir, double pushAmount, Duration speed) {
 
-        TranslateTransition movePos = new TranslateTransition(Duration.millis(1000), imgView);
+        TranslateTransition movePos = new TranslateTransition(speed, imgView);
         switch (pushDir) {
             case UP:
             case DOWN:
@@ -468,26 +499,46 @@ public class JavaFXGUI implements GUIConnector {
 
 
     @Override
+    public void cleanUpGui(int playerNum) {
+        for (ImageView treasure : treasures) {
+            gridPane.getChildren().remove(treasure);
+            treasure.setVisible(false);
+        }
+        for (Circle figure : figures) {
+            figure.setVisible(false);
+        }
+
+        for (HBox box : playerBoxes) {
+            box.setStyle("-fx-background-color: #a8a8a8");
+            box.setVisible(false);
+        }
+        playerBoxes[playerNum].setStyle("-fx-background-color: lime");
+
+
+
+    }
+
+
+
+
+
+
+    @Override
+    public void setupPlayerInfo(int playerNum, String name, int treasures) {
+        playerLabels[playerNum].setText(name);
+        treasureLabels[playerNum].setText("" + treasures);
+        playerBoxes[playerNum].setVisible(true);
+    }
+
+
+
+    @Override
+    public void updateTreasuresLeft(int playerNum, int treasures) {
+        treasureLabels[playerNum].setText("" + treasures);
+    }
+
+    @Override
     public void animateFreeCorridorRotation(Corridor corr) {
-
-    }
-
-
-
-
-
-
-
-
-    @Override
-    public void setPlayerName(Player player) {
-
-    }
-
-
-
-    @Override
-    public void updateTreasuresLeft(Player player) {
 
     }
 

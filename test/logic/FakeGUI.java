@@ -57,8 +57,15 @@ public class FakeGUI implements GUIConnector {
 
 
 
+
+
     @Override
-    public void setPlayerName(Player player) {
+    public void setupPlayerInfo(int playerNum, String name, int treasures) {
+
+    }
+
+    @Override
+    public void cleanUpGui(int playerNum) {
 
     }
 
@@ -89,7 +96,7 @@ public class FakeGUI implements GUIConnector {
 
 
     @Override
-    public void updateTreasuresLeft(Player player) {
+    public void updateTreasuresLeft(int playerNum, int treasures) {
 
     }
 

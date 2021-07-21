@@ -41,8 +41,8 @@ public class Position {
         return (c >= 0) && (r >= 0) && (c < fieldSize) && (r < fieldSize);
     }
 
-    public boolean isPushablePos() {
-        return ((c % 2) != 0) || ((r % 2) != 0);
+    public boolean isPushablePos(int fieldSize) {
+        return isEdge(fieldSize) && (((c % 2) != 0) || ((r % 2) != 0));
     }
 
     /**

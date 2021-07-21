@@ -4,8 +4,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.effect.Light;
 import javafx.scene.effect.Lighting;
 import javafx.scene.image.Image;
@@ -16,14 +15,10 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import logic.GameLogic;
-import logic.Player;
-import logic.PlayerType;
-import logic.Treasure;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.Arrays;
 import java.util.ResourceBundle;
 
 /**
@@ -79,13 +74,51 @@ public class FXMLDocumentcontroller implements Initializable {
     @FXML
     private HBox hBoxPlayerFour;
 
+    @FXML
+    private Label labelPlayerOneTreasure;
+    @FXML
+    private Label labelPlayerTwoTreasure;
+    @FXML
+    private Label labelPlayerThreeTreasure;
+    @FXML
+    private Label labelPlayerFourTreasure;
+
+    @FXML
+    private CheckBox checkFigureAnimation;
+
+    @FXML
+    private CheckBox checkPushAnimation;
+
+    @FXML
+    private Slider figureAnimSlider;
+
+    @FXML
+    private Slider pushAnimSlider;
+
+    @FXML
+    private CustomMenuItem customMenuOne;
+
+    @FXML
+    private CustomMenuItem customMenuTwo;
+
+    @FXML
+    private CustomMenuItem customMenuFigure;
+
+    @FXML
+    private CustomMenuItem customMenuPush;
+
+
     private static final Image PUSH_ARROW = new Image("gui/images/Arrow.png");
 
     private final HBox[] playerBoxes = new HBox[4];
 
     private final ImageView[] freeCorridorIVs = new ImageView[2];
 
-    private GameLogic game;
+    private final Label[] playerLabels = new Label[4];
+
+    private final Label[] treasureLabels = new Label[4];
+
+    static GameLogic game;
 
     static Stage gameSettingsWindow;
 
@@ -95,14 +128,6 @@ public class FXMLDocumentcontroller implements Initializable {
      */
     private final ImageView[][] imageViews = new ImageView[GameLogic.COLS + 2][GameLogic.ROWS + 2];
     
-    @FXML
-    private Label labelPlayerOneTreasure;
-    @FXML
-    private Label labelPlayerTwoTreasure;
-    @FXML
-    private Label labelPlayerThreeTreasure;
-    @FXML
-    private Label labelPlayerFourTreasure;
 
 
     @Override
@@ -113,10 +138,44 @@ public class FXMLDocumentcontroller implements Initializable {
         playerBoxes[1] = hBoxPlayerTwo;
         playerBoxes[2] = hBoxPlayerThree;
         playerBoxes[3] = hBoxPlayerFour;
+        playerLabels[0] = labelPlayerOne;
+        playerLabels[1] = labelPlayerTwo;
+        playerLabels[2] = labelPlayerThree;
+        playerLabels[3] = labelPlayerFour;
+        treasureLabels[0] = labelPlayerOneTreasure;
+        treasureLabels[1] = labelPlayerTwoTreasure;
+        treasureLabels[2] = labelPlayerThreeTreasure;
+        treasureLabels[3] = labelPlayerFourTreasure;
+
+
         createGrid();
         createGameTemp();
         setupPushArrows();
+        setupAnimationMenue();
         //createGame();
+    }
+
+
+    private void setupAnimationMenue() {
+        customMenuOne.setHideOnClick(false);
+        customMenuTwo.setHideOnClick(false);
+        customMenuFigure.setHideOnClick(false);
+        customMenuPush.setHideOnClick(false);
+        checkFigureAnimation.setOnAction(e -> {
+            if (checkFigureAnimation.isSelected()) {
+                figureAnimSlider.setDisable(false);
+            } else {
+                figureAnimSlider.setDisable(true);
+            }
+        });
+
+        checkPushAnimation.setOnAction(e -> {
+            if (checkPushAnimation.isSelected()) {
+                pushAnimSlider.setDisable(false);
+            } else {
+                pushAnimSlider.setDisable(true);
+            }
+        });
     }
 
 
@@ -128,6 +187,22 @@ public class FXMLDocumentcontroller implements Initializable {
      */
     private void createGrid() {
 
+        int colcount = imageViews.length;
+        int rowcount = imageViews.length;
+
+        for (int idx = 0; idx < colcount; idx++) {
+            ColumnConstraints colConst = new ColumnConstraints();
+            colConst.setMinWidth(10);
+            colConst.setHgrow(Priority.SOMETIMES);
+            colConst.setPrefWidth(100);
+            RowConstraints rowConst = new RowConstraints();
+            rowConst.setMinHeight(10);
+            rowConst.setPrefHeight(100);
+            rowConst.setVgrow(Priority.SOMETIMES);
+            gridPane.getColumnConstraints().add(colConst);
+            gridPane.getRowConstraints().add(rowConst);
+        }
+
         //grdPn width and height both are bound to width of wrapping box
         gridPane.prefWidthProperty().bind(vBoxWrappingGridPane.widthProperty());
         gridPane.prefHeightProperty().bind(vBoxWrappingGridPane.widthProperty());
@@ -136,10 +211,9 @@ public class FXMLDocumentcontroller implements Initializable {
         vBoxWrappingGridPane.prefWidthProperty().bind(hBoxWrappingVBox.heightProperty());
 
 
-        int colcount = gridPane.getColumnConstraints().size();
-        int rowcount = gridPane.getRowConstraints().size();
-//        int colcount = imageViews.length;
-//        int rowcount = imageViews.length;
+//        int colcount = gridPane.getColumnConstraints().size();
+//        int rowcount = gridPane.getRowConstraints().size();
+
 
         // bind each Imageview to a cell of the gridpane
         for (int r = 0; r < rowcount; r++) {
@@ -174,7 +248,7 @@ public class FXMLDocumentcontroller implements Initializable {
         lighting.setSurfaceScale(1.0);
         lighting.setLight(new Light.Distant(100, 100, Color.LIME));
 
-        for (int row = 2; row < imageViews.length-1; row += 2) {
+        for (int row = 2; row < imageViews.length-2; row += 2) {
             final ImageView imgView = imageViews[imageViews.length-1][row];
             imgView.setImage(PUSH_ARROW);
             scalePushArrow(imgView, scale);
@@ -185,7 +259,7 @@ public class FXMLDocumentcontroller implements Initializable {
            imgView.setEffect(lighting);
 
         }
-        for (int row = 2; row < imageViews.length-1; row += 2) {
+        for (int row = 2; row < imageViews.length-2; row += 2) {
             final ImageView imgView = imageViews[0][row];
             imgView.setImage(PUSH_ARROW);
             imgView.setRotate(180);
@@ -197,7 +271,7 @@ public class FXMLDocumentcontroller implements Initializable {
             imgView.setEffect(lighting);
 
         }
-        for (int col = 2; col < imageViews.length-1; col += 2) {
+        for (int col = 2; col < imageViews.length-2; col += 2) {
             final ImageView imgView =  imageViews[col][0];
             imgView.setImage(PUSH_ARROW);
             imgView.setRotate(-90);
@@ -208,7 +282,7 @@ public class FXMLDocumentcontroller implements Initializable {
 
             imgView.setEffect(lighting);
         }
-        for (int col = 2; col < imageViews.length-1; col += 2) {
+        for (int col = 2; col < imageViews.length-2; col += 2) {
             final ImageView imgView = imageViews[col][imageViews.length-1];
             imgView.setImage(PUSH_ARROW);
             imgView.setRotate(90);
@@ -233,7 +307,8 @@ public class FXMLDocumentcontroller implements Initializable {
      */
     private void createGameTemp() {
         JavaFXGUI gui = new JavaFXGUI(gridPane, imageViews, GameLogic.AMOUNT_OF_TREASURES, freeCorridorIVs,
-                playerBoxes, btnRotateLeft, btnRotateRight, btnEndTurn);
+                playerBoxes, btnRotateLeft, btnRotateRight, btnEndTurn, playerLabels, treasureLabels,
+                checkFigureAnimation, checkPushAnimation, figureAnimSlider, pushAnimSlider);
         /* mock game for now, just random corridors, 4 figures in each corner*/
         game = new GameLogic(gui);
 
@@ -302,7 +377,7 @@ public class FXMLDocumentcontroller implements Initializable {
 
 
             FXMLGameSettingsController ctrler = fxmlLoader.getController();
-            ctrler.setupCBoxes(numOfTreasures, numOfPlayers);
+            //ctrler.setupGameSettingsWindow();
 
             gameSettingsWindow.showAndWait();
             //this might be redundant, since modality takes care of it?
@@ -354,5 +429,10 @@ public class FXMLDocumentcontroller implements Initializable {
     private void endTurn() {
         game.nextTurn();
         btnEndTurn.setDisable(true);
+    }
+
+    @FXML
+    private void saveGame() throws IOException{
+        game.saveGameFromGSON();
     }
 }

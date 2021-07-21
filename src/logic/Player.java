@@ -29,7 +29,7 @@ public class Player {
         name = null;
         treasures = new LinkedList<>();
         playerAI = null;
-        playerNum = 1;
+        playerNum = 0;
     }
 
     /**
@@ -41,16 +41,16 @@ public class Player {
      */
     public Player(String name, Queue<Treasure> treasures, int playerNum, int fieldSize, PlayerType playerType) {
         switch(playerNum) {
-            case 1:
+            case 0:
                 pos = new Position(0, 0);
                 break;
-            case 2:
+            case 1:
                 pos = new Position(fieldSize - 1, 0);
                 break;
-            case 3:
+            case 2:
                 pos = new Position(fieldSize - 1, fieldSize - 1);
                 break;
-            case 4:
+            case 3:
                 pos = new Position(0, fieldSize - 1);
                 break;
             default:
@@ -122,6 +122,14 @@ public class Player {
         treasures.add(treasure);
     }
 
+    public int getTreasuresLeft() {
+        return treasures.size();
+    }
+
+    public Queue<Treasure> getTargetTreasures() {
+        return treasures;
+    }
+
     /**
      * Gets the next treasure the player has to find
      * @return - Enum-Entry of Treasure the player has to find
@@ -151,5 +159,12 @@ public class Player {
 
     public Position getStartingCorner() {
         return startingCorner;
+    }
+
+    public PlayerType getType() {
+        if (playerAI != null) {
+            playerAI.getType();
+        }
+        return PlayerType.Human;
     }
 }

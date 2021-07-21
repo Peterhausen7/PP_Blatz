@@ -13,6 +13,11 @@ public class AdvancedAI extends AI {
     }
 
     @Override
+    public PlayerType getType() {
+        return PlayerType.advancedAI;
+    }
+
+    @Override
     public void makePushMove(GameLogic game) {
 
     }

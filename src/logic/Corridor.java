@@ -31,7 +31,7 @@ public class Corridor {
     public Corridor(CorridorType type) {
         this.type = type;
         this.rotation = Rotation.NEUTRAL;
-        this.treasure = null;
+        //this.treasure = null;
     }
 
     /**
@@ -49,7 +49,10 @@ public class Corridor {
 //            throw new IllegalArgumentException("The treasure numbered"
 //                    + treasure + "does not exist");
 //        }
+
         this.treasure = treasure;
+
+
     }
 
     public boolean pathFromExists(Corridor fromCorr, Direction toDir) {

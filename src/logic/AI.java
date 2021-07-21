@@ -13,6 +13,11 @@ public class AI extends Player {
     }
 
     @Override
+    public PlayerType getType() {
+        return PlayerType.AI;
+    }
+
+    @Override
     public void makePushMove(GameLogic game) {
 
     }
