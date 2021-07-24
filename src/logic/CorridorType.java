@@ -8,6 +8,11 @@ public enum CorridorType {
     L,
     T;
 
+    /**
+     * Calculates the direction this CorridorType connects to at the specified rotation
+     * @param rot - the rotation
+     * @return Array containing all directions this corridor connects to at the specified rotation.
+     */
     Direction[] connectsTo(Rotation rot) {
         Direction[] result;
         switch(this) {
@@ -26,7 +31,6 @@ public enum CorridorType {
                         break;
                 }
                 break;
-
             case L:
                 result = new Direction[2];
                 switch(rot) {
@@ -48,7 +52,6 @@ public enum CorridorType {
                         break;
                 }
                 break;
-
             case T:
                 result = new Direction[3];
                 switch(rot) {
@@ -74,7 +77,6 @@ public enum CorridorType {
                         break;
                 }
                 break;
-
             default:
                 result = null;
                 break;

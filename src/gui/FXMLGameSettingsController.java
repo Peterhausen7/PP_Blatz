@@ -1,18 +1,15 @@
 package gui;
 
+import com.google.gson.JsonParseException;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import logic.GameLogic;
 import logic.PlayerType;
-
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -191,10 +188,12 @@ public class FXMLGameSettingsController implements Initializable {
         File selectedFile = fileChooser.showOpenDialog( checkBoxOne.getScene().getWindow());
 
         try {
-            FXMLDocumentcontroller.game.loadGameToGSON(selectedFile);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            FXMLDocumentcontroller.game.loadGameFromJSON(selectedFile);
+        } catch (FileNotFoundException | IllegalArgumentException | JsonParseException e) {
+            FXMLDocumentcontroller.gameSettingsWindow.close();
+            FXMLDocumentcontroller.game.showError(e);
         }
+        FXMLDocumentcontroller.gameSettingsWindow.close();
     }
 
     @FXML

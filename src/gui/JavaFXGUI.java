@@ -139,17 +139,13 @@ public class JavaFXGUI implements GUIConnector {
 
 
 
-
-
-    //all 4 for now, later this will be done according to amount of players
     @Override
-    public void setFiguresToCorners() {
+    public void setupFigures() {
         for (int i = 0; i < figures.length; i++) {
             figures[i] = new Circle(0, 0 ,0);
             figures[i].radiusProperty().bind(gridPane.widthProperty().divide(gridPane.getColumnCount() * 5));
             GridPane.setHalignment(figures[i], HPos.CENTER);
         }
-
         figures[0].setFill(Color.YELLOW);
         gridPane.add(figures[0], 1, 1);
 
@@ -162,10 +158,9 @@ public class JavaFXGUI implements GUIConnector {
         figures[3].setFill(Color.RED);
         gridPane.add(figures[3], 1, 7);
 
-
         for (Circle figure : figures) {
-           // figure.toFront();
             figure.setVisible(false);
+            figure.setMouseTransparent(true);
         }
     }
 
@@ -282,7 +277,6 @@ public class JavaFXGUI implements GUIConnector {
         lighting.setSurfaceScale(1.0);
         Color color = (blocked) ? Color.INDIANRED : Color.LIME;
         lighting.setLight(new Light.Distant(100, 100, color));
-
         imageViews[col][row].setEffect(lighting);
     }
 
@@ -305,7 +299,6 @@ public class JavaFXGUI implements GUIConnector {
     public void highlightCellRed(int col, int row) {
         highlightImg(imageViews[col][row], Color.INDIANRED);
     }
-
 
     @Override
     public void highlightCorrBlue(int col, int row, Treasure treasure) {
@@ -353,11 +346,11 @@ public class JavaFXGUI implements GUIConnector {
     }
 
     @Override
-    public void animateFigure(Player player, Position[] positions, GameLogic game) {
+    public void animateFigure(Player player, Position oldPos, Position[] positions, GameLogic game) {
         final double rowHeight = gridPane.getHeight() / gridPane.getRowCount();
         final double colWidth = gridPane.getWidth() / gridPane.getColumnCount();
-        final double oldPosX = player.getPos().getCol() * colWidth;
-        final double oldPosY = player.getPos().getRow() * rowHeight;
+        final double oldPosX = oldPos.getCol() * colWidth;
+        final double oldPosY = oldPos.getRow() * rowHeight;
         final int playerNum = player.getPlayerNum();
 
         double speed = checkFigureAnimation.isSelected() ?
@@ -366,16 +359,13 @@ public class JavaFXGUI implements GUIConnector {
         toggleRotateButtons(true);
         toggleEndTurnButton(true);
 
-        GridPane.setColumnIndex(figures[playerNum], 1);
-        GridPane.setRowIndex(figures[playerNum], 1);
-
         PathTransition pathTransition = new PathTransition();
         Path path = new Path();
 
-        path.getElements().add(new MoveTo(oldPosX, oldPosY));
+        path.getElements().add(new MoveTo(0, 0));
         for (int index = 0; index < positions.length; index++) {
-            double xMove = positions[index].getCol() * colWidth;
-            double yMove = positions[index].getRow() * rowHeight;
+            double xMove = positions[index].getCol() * colWidth - oldPosX;
+            double yMove = positions[index].getRow() * rowHeight - oldPosY;
 
             path.getElements().add(new LineTo(xMove, yMove));
         }
@@ -385,21 +375,25 @@ public class JavaFXGUI implements GUIConnector {
             figures[playerNum].setTranslateY(0);
             GridPane.setColumnIndex(figures[playerNum], positions[positions.length-1].getCol() + 1);
             GridPane.setRowIndex(figures[playerNum], positions[positions.length-1].getRow() + 1);
-            game.moveAnimationFinished(player, positions[positions.length-1]);
             toggleRotateButtons(false);
+            game.moveAnimationFinished(player, positions[positions.length-1]);
         });
 
         pathTransition.setDuration(Duration.millis(speed * positions.length));
-        //pathTransition.setDuration(Duration.millis(0));
         pathTransition.setNode(figures[playerNum]);
         pathTransition.setPath(path);
+
 
         pathTransition.play();
     }
 
     @Override
-    public void animatePush(Direction pushDir, List<Position> positions, Corridor pushedCorridor,
-                            List<Integer> treasureIndices, List<Integer> playersToMove,  GameLogic game) {
+    public void animatePush(PushAnimationParams params,  GameLogic game) {
+        Direction pushDir = params.getPushDir();
+        List<Position> positions = params.getPositions();
+        Corridor pushedCorridor = params.getPushedCorridor();
+        List<Integer> treasureIndices = params.getTreasureIndices();
+        List<Integer> playersToMove = params.getPlayerNumbs();
         final double rowHeight = gridPane.getHeight() / gridPane.getRowCount();
         final double colWidth = gridPane.getWidth() / gridPane.getColumnCount();
         double pushAmount = 0;
@@ -471,9 +465,9 @@ public class JavaFXGUI implements GUIConnector {
                figures[index].setTranslateX(0);
                figures[index].setTranslateY(0);
             }
-            game.pushAnimationFinished(positions);
             toggleRotateButtons(false);
             toggleEndTurnButton(false);
+            game.pushAnimationFinished(positions);
         });
 
         moveAll.play();
@@ -507,15 +501,11 @@ public class JavaFXGUI implements GUIConnector {
         for (Circle figure : figures) {
             figure.setVisible(false);
         }
-
         for (HBox box : playerBoxes) {
             box.setStyle("-fx-background-color: #a8a8a8");
             box.setVisible(false);
         }
         playerBoxes[playerNum].setStyle("-fx-background-color: lime");
-
-
-
     }
 
 
@@ -537,25 +527,6 @@ public class JavaFXGUI implements GUIConnector {
         treasureLabels[playerNum].setText("" + treasures);
     }
 
-    @Override
-    public void animateFreeCorridorRotation(Corridor corr) {
-
-    }
-
-    @Override
-    public void updateAnimationSpeed() {
-
-    }
-
-    @Override
-    public void displayRules() {
-
-    }
-
-    @Override
-    public void displayControls() {
-
-    }
 
     @Override
     public void endGameDialogue(String winner) {
@@ -567,4 +538,14 @@ public class JavaFXGUI implements GUIConnector {
             }
         });
     }
+
+    @Override
+    public void displayErrorAlert(Exception e) {
+        Alert errorAlert = new Alert(Alert.AlertType.ERROR);
+        errorAlert.setHeaderText("Invalid save file");
+        errorAlert.setContentText("Error while parsing save file: " + e);
+        errorAlert.showAndWait();
+    }
+
+
 }

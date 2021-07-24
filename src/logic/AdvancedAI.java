@@ -6,24 +6,25 @@ package logic;
  */
 public class AdvancedAI extends AI {
 
-    /* @TODO */
 
-    public AdvancedAI() {
-        super();
+
+    public AdvancedAI(Player player) {
+        super(player);
     }
 
-    @Override
+
     public PlayerType getType() {
         return PlayerType.advancedAI;
-    }
-
-    @Override
-    public void makePushMove(GameLogic game) {
 
     }
 
-    @Override
-    public void makeFigureMove() {
-
-    }
+//    @Override
+//    void findPushMove() {
+//
+//    }
+//
+//    @Override
+//    void findFigureMove() {
+//
+//    }
 }

@@ -13,14 +13,12 @@ public class Corridor {
     private final CorridorType type;
 
     /**
-     * Rotation of corridor, each int equals 90 degrees:
-     * 0..3 = 0/90/180/270 360=0
+     * Rotation of corridor
      */
     private Rotation rotation;
 
     /**
-     * Treasure of the corridor, 0 equals no treasure
-     * the are treasures numbered 1-24
+     * Treasure of the corridor
      */
     private Treasure treasure;
 
@@ -28,10 +26,9 @@ public class Corridor {
      * Default no rot or treasure
      * @param type - type of corridor
      */
-    public Corridor(CorridorType type) {
+    Corridor(CorridorType type) {
         this.type = type;
         this.rotation = Rotation.NEUTRAL;
-        //this.treasure = null;
     }
 
     /**
@@ -40,24 +37,24 @@ public class Corridor {
      * @param rotation - rotation of corridor
      * @param treasure - treasure of corridor
      */
-    public Corridor(CorridorType type, Rotation rotation, Treasure treasure) {
+    Corridor(CorridorType type, Rotation rotation, Treasure treasure) {
         this.type = type;
         this.rotation = rotation;
-
-        //do we have to catch illegal arguments like wrong rotation and the below?
-//        if (treasure < 0 || treasure > 24) {
-//            throw new IllegalArgumentException("The treasure numbered"
-//                    + treasure + "does not exist");
-//        }
-
         this.treasure = treasure;
-
-
     }
 
-    public boolean pathFromExists(Corridor fromCorr, Direction toDir) {
+    /**
+     * Checks if the corridor with its rotation connects with another corridor at the specified direction.
+     *
+     * For example: this=T fromCorr=I toDir=UP. While fromCorr/I has a path down,
+     * this/T has no path toDir/UP to connect with it, thus false is returned.
+     *
+     * @param fromCorr - the other corridor
+     * @param toDir - the direction to check the connection at
+     * @return true if there is a path to the other corridor taking the provided direction
+     */
+    boolean pathFromExists(Corridor fromCorr, Direction toDir) {
         boolean result = false;
-
         Direction[] dirs = fromCorr.type.connectsTo(fromCorr.rotation);
         switch(toDir) {
             case UP:
@@ -81,7 +78,6 @@ public class Corridor {
                 }
                 break;
         }
-
         return result;
     }
 
@@ -93,26 +89,41 @@ public class Corridor {
         return treasure != null;
     }
 
-    public void removeTreasure() {
+    /**
+     * Remove the treasure from this corridor (sets it to null)
+     */
+    void removeTreasure() {
         treasure = null;
     }
 
-    public void setRotation(Rotation rot) {
+    /**
+     * Sets the rotation of this corridor to rit
+     * @param rot - rotation to set to
+     */
+    void setRotation(Rotation rot) {
         rotation = rot;
     }
 
-
-
-    //getters
-
+    /**
+     * Gets the type of this corridor
+     * @return - type of this corridor
+     */
     public CorridorType getType() {
         return type;
     }
 
+    /**
+     * Gets the rotation of this corridor
+     * @return - the rotation of this corridor
+     */
     public Rotation getRotation() {
         return rotation;
     }
 
+    /**
+     * Gets the treasure of this corridor
+     * @return - the treasure of this corridor, or null if it has none
+     */
     public Treasure getTreasure() {
         return (treasure != null) ? treasure : null;
     }

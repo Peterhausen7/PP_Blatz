@@ -1,45 +1,47 @@
 package logic;
 
-
-import java.util.LinkedList;
 import java.util.Queue;
 
 /**
- * Class for a player, if not further specified by using SubClass AI/AdvancedAI,
- * this will be considered a human
- * (Will probably change this to interface or abstract)
+ * Class for a player. If the AI attribute is not null, this player is an AI.
  */
 public class Player {
 
+    /** Current position of the player */
     private Position pos;
+    /** starting corner of the player */
     private final Position startingCorner;
+    /** Name of the player */
     private final String name;
-
-    /** The treasures a player has to find, represented as numbers 1..24*/
+    /** The treasures a player has to find */
     private final Queue<Treasure> treasures;
-
-    /** Number of player, decides colour and starting corner */
+    /** Number of player, decides color and starting corner */
     private final int playerNum;
-
+    /** AI of the player, if it is one */
     private final AI playerAI;
 
-    public Player() {
-        pos = new Position(0, 0);
-        startingCorner = pos;
-        name = null;
-        treasures = new LinkedList<>();
-        playerAI = null;
-        playerNum = 0;
+    /**
+     * Creates an empty player, with just its position set. Used by the AI to find its next move
+     * @param pos - the position of the player
+     */
+    Player(Position pos) {
+        this.startingCorner = null;
+        this.name = null;
+        this.treasures = null;
+        this.playerNum = -1;
+        this.playerAI = null;
+        this.pos = new Position(pos.getCol(), pos.getRow());
     }
 
     /**
-     * Constructor setting up a player
-     * posX/Y is just a filler, will probably make a class to represent a position
-     * @param name - name of the player
+     * Constructor for player.
+     * @param name - name of player
      * @param treasures - treasures the player has to find
-     * @param playerNum - the number of the player, used for colour/starting corner/flow control
+     * @param playerNum - players number
+     * @param fieldSize - field size the player plays on
+     * @param playerType - type of the player
      */
-    public Player(String name, Queue<Treasure> treasures, int playerNum, int fieldSize, PlayerType playerType) {
+    Player(String name, Queue<Treasure> treasures, int playerNum, int fieldSize, PlayerType playerType) {
         switch(playerNum) {
             case 0:
                 pos = new Position(0, 0);
@@ -57,43 +59,39 @@ public class Player {
                 throw new IllegalArgumentException(playerNum + " is not a valid player number");
         }
         startingCorner = pos;
-
-        switch(playerType) {
-
-            case AI:
-                playerAI = new AI();
-                break;
-            case advancedAI:
-                playerAI = new AdvancedAI();
-                break;
-            case Human:
-            default:
-                playerAI = null;
-        }
-
         this.name = name;
         this.treasures = treasures;
         this.playerNum = playerNum;
+        switch(playerType) {
+            case AI:
+                playerAI = new AI(this);
+                break;
+            case advancedAI:
+                playerAI = new AdvancedAI(this);
+                break;
+            default:
+                playerAI = null;
+        }
     }
-
 
     /**
-     * Makes a push move on the field,
-     * AI needs to find a good move here
+     * Finds a move, if this player is not human
+     * @param field - the field to find the move on
+     * @return the move the AI found or null if this is a human
      */
-    public void makePushMove(GameLogic game) {
-        /* @TODO */
+    AIMove findMove(Field field) {
+        if (playerAI != null) {
+            return playerAI.findPushMove(field);
+        }
+        return null;
     }
 
     /**
-     * Moves the figure on the field,
-     * AI needs to find a good move here
+     * Checks if the player has won (has reached its starting corner with no treasures left to find)
+     * @param pos - the new position the player reached
+     * @return true if the player won
      */
-    public void makeFigureMove() {
-        /* @TODO */
-    }
-
-    public boolean checkIfWon(Position pos) {
+    boolean checkIfWon(Position pos) {
         if (treasures.isEmpty()) {
             return pos.equals(startingCorner);
         }
@@ -105,7 +103,7 @@ public class Player {
      * @param treasure - the treasure to collect
      * @return true if the treasure has been collected (was the next target)
      */
-    public boolean collectTreasure(Treasure treasure) {
+    boolean collectTreasure(Treasure treasure) {
         if (treasure.equals(nextTreasure())) {
             treasures.poll();
             return true;
@@ -113,20 +111,27 @@ public class Player {
         return false;
     }
 
-
     /**
      * Adds treasure the player has to get to the list
      * @param treasure - Treasure to add
      */
-    public void addTreasure(Treasure treasure) {
+    void addTreasure(Treasure treasure) {
         treasures.add(treasure);
     }
 
-    public int getTreasuresLeft() {
+    /**
+     * Returns the number of treasures left to find
+     * @return number of treasures left
+     */
+    int getTreasuresLeft() {
         return treasures.size();
     }
 
-    public Queue<Treasure> getTargetTreasures() {
+    /**
+     * Return the Queue of treasures this player has to find
+     * @return the Queue of treasures
+     */
+    Queue<Treasure> getTargetTreasures() {
         return treasures;
     }
 
@@ -134,37 +139,70 @@ public class Player {
      * Gets the next treasure the player has to find
      * @return - Enum-Entry of Treasure the player has to find
      */
-    public Treasure nextTreasure() {
+    Treasure nextTreasure() {
         return treasures.peek();
     }
 
-    public void setPos(Position pos) {
+    /**
+     * Sets the position of the player
+     * @param pos - position to set
+     */
+    void setPos(Position pos) {
         this.pos = pos;
     }
 
-    /** Getters - everything for now */
-
-
-    public String getName() {
+    /**
+     * Gets the name of this player
+     * @return - the name
+     */
+    String getName() {
         return name;
     }
 
+    /**
+     * Gets the player number of this player
+     * @return the player number
+     */
     public int getPlayerNum() {
         return playerNum;
     }
 
-    public Position getPos() {
+    /**
+     * Gets the position of this player
+     * @return the position
+     */
+    Position getPos() {
         return pos;
     }
 
-    public Position getStartingCorner() {
+    /**
+     * Gets the starting corner of this player
+     * @return the starting corner
+     */
+    Position getStartingCorner() {
         return startingCorner;
     }
 
-    public PlayerType getType() {
+    /**
+     * Gets the type of this player
+     * @return the type
+     */
+    PlayerType getType() {
         if (playerAI != null) {
-            playerAI.getType();
+            return playerAI.getType();
         }
         return PlayerType.Human;
+    }
+
+    @Override
+    public String toString() {
+        return "Player{" +
+                "pos=" + pos +
+                ", startingCorner=" + startingCorner +
+                ", name='" + name + '\'' +
+                ", treasures=" + treasures +
+                ", playerNum=" + playerNum +
+                ", playerAI=" + playerAI +
+                '}';
     }
 }

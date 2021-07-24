@@ -80,7 +80,7 @@
     {
       "involved": true,
       "name": "Porthos",
-      "directedBy": 2,
+      "directedBy": 1,
       "position": {"x": 4, "y": 5},
       "treasureCards": [16, 12, 3, 4, 11, 14]
     },

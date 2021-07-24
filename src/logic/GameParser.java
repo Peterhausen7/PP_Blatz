@@ -1,18 +1,17 @@
 package logic;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Class to parse game from or to (for example) GSON
+ * Class to parse game from or to JSON with for example GSON
  */
 class GameParser {
-    private List<FieldCard[]> field;
-    private FreeWayCard freeWayCard;
-    private int currentPlayer;
-    private List<ParsedPlayer> players;
+    private final List<ParsedCorridor[]> field;
+    private final ParsedFreeWayCard freeWayCard;
+    private final int currentPlayer;
+    private final List<ParsedPlayer> players;
 
-    GameParser(List<FieldCard[]> field, FreeWayCard freeWayCard, int currentPlayer,
+    GameParser(List<ParsedCorridor[]> field, ParsedFreeWayCard freeWayCard, int currentPlayer,
                List<ParsedPlayer> players) {
         this.field = field;
         this.freeWayCard = freeWayCard;
@@ -21,7 +20,7 @@ class GameParser {
     }
 
     // Getter Methods
-    public List<FieldCard[]> getField() {
+    public List<ParsedCorridor[]> getField() {
         return field;
     }
 
@@ -29,7 +28,7 @@ class GameParser {
         return players;
     }
 
-    public FreeWayCard getFreeWayCard() {
+    public ParsedFreeWayCard getFreeWayCard() {
         return freeWayCard;
     }
 
@@ -41,12 +40,15 @@ class GameParser {
 
 }
 
+/**
+ * A parsed player
+ */
 class ParsedPlayer {
-    private boolean involved;
-    private String name;
-    private int directedBy;
-    private ParsedPosition position;
-    private List<Integer> treasureCards;
+    private final boolean involved;
+    private final String name;
+    private final int directedBy;
+    private final ParsedPosition position;
+    private final List<Integer> treasureCards;
 
     ParsedPlayer(boolean involved, String name, int directedBy,
                  ParsedPosition position, List<Integer> treasureCards) {
@@ -80,12 +82,15 @@ class ParsedPlayer {
 
 }
 
-class FieldCard {
-    private int type;
-    private int rotated;
-    private int treasure;
+/**
+ * A parsed Corridor
+ */
+class ParsedCorridor {
+    private final int type;
+    private final int rotated;
+    private final int treasure;
 
-    FieldCard(int type, int rotated, int treasure) {
+    ParsedCorridor(int type, int rotated, int treasure) {
         this.type = type;
         this.rotated = rotated;
         this.treasure = treasure;
@@ -104,19 +109,21 @@ class FieldCard {
     }
 }
 
-class FreeWayCard {
-    private int type;
-    private int rotated;
-    private int treasure;
-    ParsedPosition position;
+/**
+ * A parsed free Corridor
+ */
+class ParsedFreeWayCard {
+    private final int type;
+    private final int rotated;
+    private final int treasure;
+    private final ParsedPosition position;
 
-    FreeWayCard(int type, int rotated, int treasure, ParsedPosition position) {
+    ParsedFreeWayCard(int type, int rotated, int treasure, ParsedPosition position) {
         this.type = type;
         this.rotated = rotated;
         this.treasure = treasure;
         this.position = position;
     }
-
 
     // Getter Methods
     public int getType() {
@@ -136,9 +143,12 @@ class FreeWayCard {
     }
 }
 
+/**
+ * A parsed position
+ */
 class ParsedPosition {
-    private int x;
-    private int y;
+    private final int x;
+    private final int y;
 
     ParsedPosition(int x, int y) {
         this.x = x;

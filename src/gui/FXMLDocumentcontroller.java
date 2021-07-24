@@ -15,10 +15,8 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import logic.GameLogic;
-
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.ResourceBundle;
 
 /**
@@ -26,6 +24,7 @@ import java.util.ResourceBundle;
  */
 public class FXMLDocumentcontroller implements Initializable {
 
+    /** GridPane representing the field */
     @FXML
     private GridPane gridPane;
 
@@ -34,101 +33,106 @@ public class FXMLDocumentcontroller implements Initializable {
 
     @FXML
     private HBox hBoxWrappingVBox;
-
+    /** ImageView of the free corridor */
     @FXML
     private ImageView freeCorridorIV;
-
+    /** ImageView of the treasure of the free corridor */
     @FXML
     private ImageView freeCorrTreasureIV;
-
+    /** The rotate right button*/
     @FXML
     private Button btnRotateRight;
-
+    /** the rotate left button*/
     @FXML
     private Button btnRotateLeft;
-
+    /** the end turn button */
     @FXML
     private Button btnEndTurn;
-
+    /** the label of player one's name */
     @FXML
     private Label labelPlayerOne;
-
+    /** the label of player two's name */
     @FXML
     private Label labelPlayerTwo;
-
+    /** the label of player three's name */
     @FXML
     private Label labelPlayerThree;
-
+    /** the label of player four's name */
     @FXML
     private Label labelPlayerFour;
-
-    @FXML
-    private HBox hBoxPlayerOne;
-
-    @FXML
-    private HBox hBoxPlayerTwo;
-
-    @FXML
-    private HBox hBoxPlayerThree;
-
-    @FXML
-    private HBox hBoxPlayerFour;
-
+    /** the label of player one's treasures left */
     @FXML
     private Label labelPlayerOneTreasure;
+    /** the label of player two's treasures left */
     @FXML
     private Label labelPlayerTwoTreasure;
+    /** the label of player three's treasures left */
     @FXML
     private Label labelPlayerThreeTreasure;
+    /** the label of player four's treasures left */
     @FXML
     private Label labelPlayerFourTreasure;
-
+    /** the hbox holding player one's information */
+    @FXML
+    private HBox hBoxPlayerOne;
+    /** the hbox holding player two's information */
+    @FXML
+    private HBox hBoxPlayerTwo;
+    /** the hbox holding player three's information */
+    @FXML
+    private HBox hBoxPlayerThree;
+    /** the hbox holding player four's information */
+    @FXML
+    private HBox hBoxPlayerFour;
+    /** Checkbox for turning on/off the figure animation */
     @FXML
     private CheckBox checkFigureAnimation;
-
+    /** Checkbox for turning on/off the push animation */
     @FXML
     private CheckBox checkPushAnimation;
-
+    /** The slider for the figure animation speed */
     @FXML
     private Slider figureAnimSlider;
-
+    /** the slider for the push animation speed */
     @FXML
     private Slider pushAnimSlider;
 
+    /** Custom of the animation checkboxes and sliders */
     @FXML
     private CustomMenuItem customMenuOne;
-
     @FXML
     private CustomMenuItem customMenuTwo;
-
     @FXML
     private CustomMenuItem customMenuFigure;
-
     @FXML
     private CustomMenuItem customMenuPush;
 
-
+    /** Image of the push arrow */
     private static final Image PUSH_ARROW = new Image("gui/images/Arrow.png");
+    /** The game instance */
+    static GameLogic game;
+    /**  The game settings window instance */
+    static Stage gameSettingsWindow;
+    /** min width/height of grid cell */
+    private static int MIN_WIDTH_HEIGHT_OF_CELL = 10;
+    /** min width/height of grid cell */
+    private static int PREF_WITH_HEIGHT_OF_CELL = 100;
 
+    /** the HBoxes of the players */
     private final HBox[] playerBoxes = new HBox[4];
-
+    /** The imageView's representing a free corridor */
     private final ImageView[] freeCorridorIVs = new ImageView[2];
-
+    /** The labels of player names */
     private final Label[] playerLabels = new Label[4];
-
+    /** The labels of players treasures left */
     private final Label[] treasureLabels = new Label[4];
 
-    static GameLogic game;
-
-    static Stage gameSettingsWindow;
 
     /**
      * All ImageViews in the cells of the grid. Larger then the logical field,
      * to have room for animations etc.
      */
-    private final ImageView[][] imageViews = new ImageView[GameLogic.COLS + 2][GameLogic.ROWS + 2];
-    
-
+    private final ImageView[][] imageViews = new ImageView[GameLogic.FIELD_SIZE + 2][GameLogic.FIELD_SIZE + 2];
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -146,90 +150,52 @@ public class FXMLDocumentcontroller implements Initializable {
         treasureLabels[1] = labelPlayerTwoTreasure;
         treasureLabels[2] = labelPlayerThreeTreasure;
         treasureLabels[3] = labelPlayerFourTreasure;
-
-
         createGrid();
-        createGameTemp();
+        createGame();
         setupPushArrows();
-        setupAnimationMenue();
-        //createGame();
+        setupAnimationMenu();
     }
-
-
-    private void setupAnimationMenue() {
-        customMenuOne.setHideOnClick(false);
-        customMenuTwo.setHideOnClick(false);
-        customMenuFigure.setHideOnClick(false);
-        customMenuPush.setHideOnClick(false);
-        checkFigureAnimation.setOnAction(e -> {
-            if (checkFigureAnimation.isSelected()) {
-                figureAnimSlider.setDisable(false);
-            } else {
-                figureAnimSlider.setDisable(true);
-            }
-        });
-
-        checkPushAnimation.setOnAction(e -> {
-            if (checkPushAnimation.isSelected()) {
-                pushAnimSlider.setDisable(false);
-            } else {
-                pushAnimSlider.setDisable(true);
-            }
-        });
-    }
-
-
-
 
     /**
      * Bind's the grid to the surrounding boxes, to keep it quadratic
      * Creates ImageView for each cell and writes it to imageViews array
+     * Creates mouse click, enter and exit events for the imageViews.
      */
     private void createGrid() {
-
         int colcount = imageViews.length;
         int rowcount = imageViews.length;
 
+        //sets up the column and row constraints for the grid
         for (int idx = 0; idx < colcount; idx++) {
             ColumnConstraints colConst = new ColumnConstraints();
-            colConst.setMinWidth(10);
+            colConst.setMinWidth(MIN_WIDTH_HEIGHT_OF_CELL);
             colConst.setHgrow(Priority.SOMETIMES);
-            colConst.setPrefWidth(100);
+            colConst.setPrefWidth(PREF_WITH_HEIGHT_OF_CELL);
             RowConstraints rowConst = new RowConstraints();
-            rowConst.setMinHeight(10);
-            rowConst.setPrefHeight(100);
+            rowConst.setMinHeight(MIN_WIDTH_HEIGHT_OF_CELL);
+            rowConst.setPrefHeight(PREF_WITH_HEIGHT_OF_CELL);
             rowConst.setVgrow(Priority.SOMETIMES);
             gridPane.getColumnConstraints().add(colConst);
             gridPane.getRowConstraints().add(rowConst);
         }
-
         //grdPn width and height both are bound to width of wrapping box
         gridPane.prefWidthProperty().bind(vBoxWrappingGridPane.widthProperty());
         gridPane.prefHeightProperty().bind(vBoxWrappingGridPane.widthProperty());
-
         //bind the width of the vBox to the height of the wrapping hBox
         vBoxWrappingGridPane.prefWidthProperty().bind(hBoxWrappingVBox.heightProperty());
-
-
-//        int colcount = gridPane.getColumnConstraints().size();
-//        int rowcount = gridPane.getRowConstraints().size();
-
-
         // bind each Imageview to a cell of the gridpane
         for (int r = 0; r < rowcount; r++) {
             for (int c = 0; c < colcount; c++) {
                 //creates an empty imageview
                 imageViews[c][r] = new ImageView();
-
                 final int col = c;
                 final int row = r;
+                //sets the imageview events
                 imageViews[c][r].setOnMouseClicked(e -> game.gridClicked(col, row, colcount));
                 imageViews[c][r].setOnMouseEntered( e -> game.cellEntered(col, row, colcount));
                 imageViews[c][r].setOnMouseExited( e -> imageViews[col][row].setEffect(null));
                 imageViews[c][r].setPickOnBounds(true);
                 gridPane.add(imageViews[c][r], c, r);
-
-
                 //the image shall resize when the cell resizes
                 imageViews[c][r].fitWidthProperty().bind(gridPane.widthProperty().divide(colcount));
                 imageViews[c][r].fitHeightProperty().bind(gridPane.heightProperty().divide(rowcount));
@@ -238,9 +204,21 @@ public class FXMLDocumentcontroller implements Initializable {
         }
     }
 
+    /**
+     * creates a game
+     */
+    private void createGame() {
+        JavaFXGUI gui = new JavaFXGUI(gridPane, imageViews, GameLogic.AMOUNT_OF_TREASURES, freeCorridorIVs,
+                playerBoxes, btnRotateLeft, btnRotateRight, btnEndTurn, playerLabels, treasureLabels,
+                checkFigureAnimation, checkPushAnimation, figureAnimSlider, pushAnimSlider);
+        game = new GameLogic(gui);
+    }
+
+    /**
+     * Sets up the push arrows
+     */
     private void setupPushArrows() {
         final float scale = 0.8f;
-
         Lighting lighting = new Lighting();
         lighting.setDiffuseConstant(1.0);
         lighting.setSpecularConstant(1.0);
@@ -256,8 +234,7 @@ public class FXMLDocumentcontroller implements Initializable {
             imgView.setOnMouseEntered(e -> scalePushArrow(imgView, 1));
             imgView.setOnMouseExited(e -> scalePushArrow(imgView, scale));
 
-           imgView.setEffect(lighting);
-
+            imgView.setEffect(lighting);
         }
         for (int row = 2; row < imageViews.length-2; row += 2) {
             final ImageView imgView = imageViews[0][row];
@@ -269,7 +246,6 @@ public class FXMLDocumentcontroller implements Initializable {
             imgView.setOnMouseExited(e -> scalePushArrow(imgView, scale));
 
             imgView.setEffect(lighting);
-
         }
         for (int col = 2; col < imageViews.length-2; col += 2) {
             final ImageView imgView =  imageViews[col][0];
@@ -295,75 +271,47 @@ public class FXMLDocumentcontroller implements Initializable {
         }
     }
 
+    /**
+     * Sets up the animation submenu
+     */
+    private void setupAnimationMenu() {
+        customMenuOne.setHideOnClick(false);
+        customMenuTwo.setHideOnClick(false);
+        customMenuFigure.setHideOnClick(false);
+        customMenuPush.setHideOnClick(false);
+        checkFigureAnimation.setOnAction(e -> {
+            if (checkFigureAnimation.isSelected()) {
+                figureAnimSlider.setDisable(false);
+            } else {
+                figureAnimSlider.setDisable(true);
+            }
+        });
+        checkPushAnimation.setOnAction(e -> {
+            if (checkPushAnimation.isSelected()) {
+                pushAnimSlider.setDisable(false);
+            } else {
+                pushAnimSlider.setDisable(true);
+            }
+        });
+    }
+
+    /**
+     * Method called when mouse enters or exits a push arrow. Highlights it by scaling
+     * @param imgView - image view to highlight
+     * @param scale - amount to scale
+     */
     private void scalePushArrow(ImageView imgView, double scale) {
         imgView.setScaleX(scale);
         imgView.setScaleY(scale);
     }
 
-
-
     /**
-     * creates a game, temporary method to see stuff on the GUI
+     * Opens the game settings window
      */
-    private void createGameTemp() {
-        JavaFXGUI gui = new JavaFXGUI(gridPane, imageViews, GameLogic.AMOUNT_OF_TREASURES, freeCorridorIVs,
-                playerBoxes, btnRotateLeft, btnRotateRight, btnEndTurn, playerLabels, treasureLabels,
-                checkFigureAnimation, checkPushAnimation, figureAnimSlider, pushAnimSlider);
-        /* mock game for now, just random corridors, 4 figures in each corner*/
-        game = new GameLogic(gui);
-
-//       game = new GameLogic(gui,"L100,I101,T000,I102,L200\n" +
-//                "I003,I104,I005,I106,I007\n" +
-//                "T300,I108,T000,I109,T100\n" +
-//                "I010,I111,I012,I113,I014\n" +
-//                "L000,I115,T200,I116,L300", new Player[4]);
-
-//        game = new GameLogic(gui,"L100,I100,T000,L200,T000,L100,L200\n" +
-//                "I000,L100,I000,T100,I000,T100,L300\n" +
-//                "T300,L100,T300,I000,T000,L300,T100\n" +
-//                "T200,I000,I000,T100,I000,I000,L100\n" +
-//                "T300,L100,T200,L000,T100,L100,T100\n" +
-//                "I000,I000,L100,L200,L100,I000,L100\n" +
-//                "L000,T100,T200,T100,T200,I100,L300", new Player[4]);
-//
-//        Player[] players = new Player[4];
-//        Queue<Treasure> targets = new LinkedList<>();
-//        targets.add(Treasure.T06);
-//        players[0] = new Player("P1", targets, 1, imageViews.length - 2, PlayerType.Human);
-//        players[1] = new Player("P2", new LinkedList<>(), 2, imageViews.length - 2, PlayerType.Human);
-//        players[2] = new Player("P3", new LinkedList<>(), 3, imageViews.length - 2, PlayerType.Human);
-//        players[3] = new Player("P4", new LinkedList<>(), 4, imageViews.length - 2, PlayerType.Human);
-//                game = new GameLogic(gui,"L101,I100,T000,L200,T000,L100,L200\n" +
-//                "I000,L100,I000,T100,I002,T100,L300\n" +
-//                "T300,L107,T300,I013,T014,L300,T100\n" +
-//                "T206,I012,I005,T100,I003,I000,L115\n" +
-//                "T300,L100,T200,L008,T118,L111,T100\n" +
-//                "I009,I020,L100,L219,L110,I004,L100\n" +
-//                "L016,T100,T200,T100,T217,I100,L300", players);
-
-
-
-        /* game from string*/
-//        game = new GameLogic(gui, "L100,I101,T000,I102,L200\n" +
-//                                       "I003,I104,I005,I106,I007\n" +
-//                                       "T300,I108,T000,I109,T100\n" +
-//                                       "I010,I111,I012,I113,I014\n" +
-//                                       "L000,I115,T200,I116,L300", new Player[4]);
-
-    }
-
-    /**
-     * creates a real game
-     */
-    private void createGame() {
-
-    }
-
-    public void showGameSettingsWindow(int numOfTreasures, int numOfPlayers) {
+    void showGameSettingsWindow() {
         //if the window hasn't been opened yet, it creates the stage
         if (gameSettingsWindow == null) {
             FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("FXMLGameSettings.fxml"));
-
             gameSettingsWindow = new Stage();
             try {
                 gameSettingsWindow.setScene(new Scene(fxmlLoader.load()));
@@ -375,9 +323,7 @@ public class FXMLDocumentcontroller implements Initializable {
             gameSettingsWindow.setMinHeight(425);
             gameSettingsWindow.setMinWidth(475);
 
-
             FXMLGameSettingsController ctrler = fxmlLoader.getController();
-            //ctrler.setupGameSettingsWindow();
 
             gameSettingsWindow.showAndWait();
             //this might be redundant, since modality takes care of it?
@@ -389,7 +335,10 @@ public class FXMLDocumentcontroller implements Initializable {
         }
     }
 
-    public void setTreasureHighlightEvent() {
+    /**
+     * Sets the event for the H key press.
+     */
+    void setTreasureHighlightEvent() {
         Scene scene = gridPane.getScene();
         scene.setOnKeyPressed(e -> {
             if (e.getCode() == KeyCode.H) {
@@ -403,36 +352,47 @@ public class FXMLDocumentcontroller implements Initializable {
         });
     }
 
-
-
-
     /**
      * Handles click on the "Spiel - Einstellungen" button
      * opens the start new game with game settings window
      */
     @FXML
     private void menuStartClick() {
-        showGameSettingsWindow(GameLogic.AMOUNT_OF_TREASURES, game.getNumOfPlayers());
+        showGameSettingsWindow();
     }
 
+    /**
+     * Handles click on the rotate left button. Rotates the free corridor 90 to the left
+     */
     @FXML
     private void rotateLeft() {
         game.rotateFreeCorridorLeft();
     }
 
+    /**
+     * Handles click on the rotate left button. Rotates the free corridor 90 to the right
+     */
     @FXML
     private void rotateRight() {
         game.rotateFreeCorridorRight();
     }
 
+    /**
+     * Handles the "Zug beenden" button, ends the current players turn. (Skip his movement phase)
+     */
     @FXML
     private void endTurn() {
-        game.nextTurn();
         btnEndTurn.setDisable(true);
+        game.nextTurn();
+
     }
 
+    /**
+     * Saves the game to json
+     * @throws IOException - something went wrong with the file
+     */
     @FXML
-    private void saveGame() throws IOException{
-        game.saveGameFromGSON();
+    private void saveGame() throws IOException {
+        game.saveGameToJSON();
     }
 }
